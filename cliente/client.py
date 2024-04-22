@@ -131,9 +131,9 @@ class client :
             
             message = "DELETE\0"
             print('Sending message: ' + message)
-            sock.sendall(user.encode())
-            print('Sending user: ' + user)
-            sock.sendall(user.encode() + "\0".encode())
+            sock.sendall(message.encode())
+            print('Sending user: ' + fileName)
+            sock.sendall(fileName.encode() + "\0".encode())
             
             msg = sock.recv(1)  # Wait for server response
             print('Received message: ' + msg.decode()   )

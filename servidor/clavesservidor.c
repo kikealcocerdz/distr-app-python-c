@@ -51,49 +51,46 @@ void init_serv(char *res) {
     sprintf(res, "0");
     return; 
 }
-
 void register_serv(char *username, char *res) {
-    char filename[20]; 
-    sprintf(filename, "../usuarios/%s.txt", username);  // Convertimos la clave en string y añadimos el directorio
-    FILE *checkExistFile = fopen(filename, "r");
-    if (checkExistFile != NULL) {
-        fclose(checkExistFile);
+    char foldername[20]; 
+    sprintf(foldername, "../usuarios/%s", username);  // Convertimos el nombre de usuario en string y añadimos el directorio
+    // Check if the folder exists
+    if (access(foldername, F_OK) == 0) {
         perror("Usuario registrado previamente\n");
         sprintf(res, "1");
         return;
     }
     
-    FILE *clavesFile = fopen(filename, "w+");
-    if (clavesFile == NULL) {
-        perror("Error al abrir el archivo");
+    // Create the folder
+    if (mkdir(foldername, 0777) == -1) {
+        perror("Error al crear el directorio");
         sprintf(res, "2");
         return;
     }
     sprintf(res, "0");
     return;
 }
-
 void unregister_serv(char *username, char *res) {
-    char filename[20]; 
-    sprintf(filename, "../usuarios/%s.txt", username);
+    char foldername[20]; 
+    sprintf(foldername, "../usuarios/%s", username);
 
-    // Check if the file exists
-    if (access(filename, F_OK) != 0) {
-        // File does not exist
+    // Check if the folder exists
+    if (access(foldername, F_OK) != 0) {
+        // Folder does not exist
         perror("Usuario no registrado\n");
         sprintf(res, "1");
         return;
     }
 
-    // Attempt to remove the file
-    if (remove(filename) != 0) {
-        // Error occurred while removing the file
-        perror("Error al eliminar el archivo\n");
+    // Attempt to remove the folder
+    if (rmdir(foldername) != 0) {
+        // Error occurred while removing the folder
+        perror("Error al eliminar el directorio\n");
         sprintf(res, "2");
         return;
     }
 
-    // File successfully removed
+    // Folder successfully removed
     sprintf(res, "0");
 }
 

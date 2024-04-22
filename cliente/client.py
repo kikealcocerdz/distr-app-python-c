@@ -22,14 +22,17 @@ class client :
 
     @staticmethod
     def register(user):
+        print("Registering user: " + user)
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_address = (client._server, client._port)
             sock.connect(server_address)
             
-            message = "REGISTER " + user + "\0"
+            message = "REGISTER\0"
             print('Sending message: ' + message)
             sock.sendall(message.encode())
+            print('Sending user: ' + user)
+            sock.sendall(user.encode())
             return client.RC.OK  # Return appropriate value based on 
             
         except Exception as e:
@@ -39,8 +42,22 @@ class client :
    
     @staticmethod
     def  unregister(user) :
-        #  Write your code here
-        return client.RC.ERROR
+        print("Unregistering user: " + user)
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server_address = (client._server, client._port)
+            sock.connect(server_address)
+            
+            message = "UNREGISTER\0"
+            print('Sending message: ' + message)
+            sock.sendall(message.encode())
+            print('Sending user: ' + user)
+            sock.sendall(user.encode())
+            return client.RC.OK  # Return appropriate value based on 
+            
+        except Exception as e:
+            print("Exception during unregistration:", str(e))
+            return client.RC.ERROR
 
 
     
@@ -63,8 +80,26 @@ class client :
 
     @staticmethod
     def  delete(fileName) :
-        #  Write your code here
-        return client.RC.ERROR
+        print("Deleting file: " + fileName)
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server_address = (client._server, client._port)
+            sock.connect(server_address)
+            
+            message = "DELETE\0"
+            print('Sending message: ' + message)
+            sock.sendall(message.encode())
+            print('Sending user: ' + fileName)
+            sock.sendall(fileName.encode())
+            
+            sock.recvfrom(1024)  # Wait for server response
+            sock.close()  # Cierra el socket después de usarlo
+
+            return client.RC.OK  # Return appropriate value based on 
+            
+        except Exception as e:
+            print("Exception deleting the file:", str(e))
+            return client.RC.ERROR
 
     @staticmethod
     def  listusers() :
@@ -185,8 +220,8 @@ class client :
             parser.error("Error: Port must be in the range 1024 <= port <= 65535");
             return False;
         
-        _server = args.s
-        _port = args.p
+        client._server = args.s
+        client._port = args.p
 
         return True
 

@@ -83,7 +83,7 @@ class client :
     
     @staticmethod
     def  connect(user) :
-       print("Unregistering user: " + user)
+        print("Unregistering user: " + user)
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_address = (client._server, client._port)

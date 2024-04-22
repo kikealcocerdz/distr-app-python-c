@@ -31,9 +31,20 @@ class client :
             message = "REGISTER\0"
             print('Sending message: ' + message)
             sock.sendall(message.encode())
+            
             print('Sending user: ' + user)
-            sock.sendall(user.encode())
-            return client.RC.OK  # Return appropriate value based on 
+            sock.sendall(user.encode() + "\0".encode())
+            respuesta = sock.recv(1024).decode()
+
+            if respuesta[0] == "0":
+                print('REGISTER OK')
+            elif respuesta[0] == "1":
+                print('REGISTER IN USE')
+            elif respuesta[0] == "2":
+                print('REGISTER FAIL')
+            else:
+                print('REGISTER FAIL')
+
             
         except Exception as e:
             print("Exception during registration:", str(e))
@@ -51,9 +62,18 @@ class client :
             message = "UNREGISTER\0"
             print('Sending message: ' + message)
             sock.sendall(message.encode())
+            
             print('Sending user: ' + user)
-            sock.sendall(user.encode())
-            return client.RC.OK  # Return appropriate value based on 
+            sock.sendall(user.encode() + "\0".encode())
+            respuesta = sock.recv(1024).decode("utf-8")
+            if respuesta[0] == "0":
+                print('UNREGISTER OK')
+            elif respuesta[0] == "1":
+                print('USER DOES NOT EXIST')
+            elif respuesta[0] == "2":
+                print('REGISTER FAIL')
+            else:
+                print('REGISTER FAIL')
             
         except Exception as e:
             print("Exception during unregistration:", str(e))
@@ -63,8 +83,31 @@ class client :
     
     @staticmethod
     def  connect(user) :
-        #  Write your code here
-        return client.RC.ERROR
+       print("Unregistering user: " + user)
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server_address = (client._server, client._port)
+            sock.connect(server_address)
+            
+            message = "UNREGISTER\0"
+            print('Sending message: ' + message)
+            sock.sendall(message.encode())
+            
+            print('Sending user: ' + user)
+            sock.sendall(user.encode() + "\0".encode())
+            respuesta = sock.recv(1024).decode("utf-8")
+            if respuesta[0] == "0":
+                print('UNREGISTER OK')
+            elif respuesta[0] == "1":
+                print('USER DOES NOT EXIST')
+            elif respuesta[0] == "2":
+                print('REGISTER FAIL')
+            else:
+                print('REGISTER FAIL')
+            
+        except Exception as e:
+            print("Exception during unregistration:", str(e))
+            return client.RC.ERROR
 
 
     
@@ -88,11 +131,12 @@ class client :
             
             message = "DELETE\0"
             print('Sending message: ' + message)
-            sock.sendall(message.encode())
-            print('Sending user: ' + fileName)
-            sock.sendall(fileName.encode())
+            sock.sendall(user.encode())
+            print('Sending user: ' + user)
+            sock.sendall(user.encode() + "\0".encode())
             
-            sock.recvfrom(1024)  # Wait for server response
+            msg = sock.recv(1)  # Wait for server response
+            print('Received message: ' + msg.decode()   )
             sock.close()  # Cierra el socket después de usarlo
 
             return client.RC.OK  # Return appropriate value based on 

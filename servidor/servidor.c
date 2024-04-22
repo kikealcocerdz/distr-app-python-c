@@ -18,36 +18,36 @@ void tratar_mensaje(void *arg) {
     int sc = *(int *)arg;
     int ret;
     char op='\0';
-    char value1[256]="", cadena[256]="", res[256]="";
+    char value1[256]="", operacion[256]="", res[256]="", attr2[256]="";
     char V_Value2[256]="";
     int N_Value2, key;
 
     pthread_mutex_lock(&mutex_mensaje);
 
-    if (readLine(sc, (char *)&cadena, MAXSIZE) == -1) {
+    if (readLine(sc, (char *)&operacion, MAXSIZE) == -1) {
         perror("error al recvMessage 2");
         pthread_mutex_unlock(&mutex_mensaje);
         return;
     }
     //Asignamos que operacion se ha de realizar.
-    printf("Cadena recibida: %s\n", cadena);
-    if (strcmp(cadena, "REGISTER") == 0) {
+    printf("operacion recibida: %s\n", operacion);
+    if (strcmp(operacion, "REGISTER") == 0) {
         op = '0';}
-    else if (strcmp(cadena, "UNREGISTER") == 0) {
+    else if (strcmp(operacion, "UNREGISTER") == 0) {
         op = '1';}
-    else if (strcmp(cadena, "CONNECT") == 0) {
+    else if (strcmp(operacion, "CONNECT") == 0) {
         op = '2';}
-    else if (strcmp(cadena, "PUBLISH") == 0) {
+    else if (strcmp(operacion, "PUBLISH") == 0) {
         op = '3';}
-    else if (strcmp(cadena, "DELETE") == 0) {
+    else if (strcmp(operacion, "DELETE") == 0) {
         op = '4';}
-    else if (strcmp(cadena, "LIST_USERS") == 0) {
+    else if (strcmp(operacion, "LIST_USERS") == 0) {
         op = '5';}
-    else if (strcmp(cadena, "LIST_CONTENT") == 0) {
+    else if (strcmp(operacion, "LIST_CONTENT") == 0) {
         op = '6';}
-    else if (strcmp(cadena, "DISCONNECT") == 0) {
+    else if (strcmp(operacion, "DISCONNECT") == 0) {
         op = '7';}
-    else if (strcmp(cadena,"GET_FILE") == 0 ){
+    else if (strcmp(operacion,"GET_FILE") == 0 ){
         op = '8';}
     
 
@@ -56,33 +56,35 @@ void tratar_mensaje(void *arg) {
     switch (op) {
         case '0':
             printf("REGISTER2\n");
-            if (readLine(sc, (char *)&cadena, MAXSIZE) == -1) {
+            if (readLine(sc, (char *)&attr2, MAXSIZE) == -1) {
                 perror("error al recvMessage 2");
                 return;
             }
-            printf("Usuario recibido: %s\n", cadena);
+            register_serv(attr2, res);
+            printf("Usuario recibido: %s\n", attr2);
             break;
         case '1':
             printf("UNREGISTER2\n");
-            if (readLine(sc, (char *)&cadena, MAXSIZE) == -1) {
+            if (readLine(sc, (char *)&attr2, MAXSIZE) == -1) {
                 perror("error al recvMessage 2");
                 return;
             }
-            printf("Usuario recibido para desregistrarse: %s\n", cadena);
+            unregister_serv(attr2, res);
+            printf("Usuario recibido para borrar su registro: %s\n", attr2);
             break;
         case '2':
-            get_value_serv(key, value1, &N_Value2, V_Value2, res);
+            // get_value_serv(key, value1, &N_Value2, V_Value2, res);
             break;
         case '3':
-            modify_value_serv(key, value1, N_Value2, V_Value2, res);
+            // modify_value_serv(key, value1, N_Value2, V_Value2, res);
             break;
         case '4':
-            printf("Deleting2\n");
-            if (readLine(sc, (char *)&cadena, MAXSIZE) == -1) {
+            printf("DELETING2\n");
+            if (readLine(sc, (char *)&attr2, MAXSIZE) == -1) {
                 perror("error al recvMessage 2");
                 return;
             }
-            printf("Fichero recibido para borrar: %s\n", cadena);
+            printf("Fichero recibido para borrar: %s\n", attr2);
             //Llamar a la funcion de borrar y returnear un valor
             strcpy(res, "Fichero borrado");
             break;

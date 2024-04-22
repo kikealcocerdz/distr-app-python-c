@@ -52,32 +52,51 @@ void init_serv(char *res) {
     return; 
 }
 
-void set_value_serv(int key, char *value1, int N_value2, char *V_value2, char *res) {
+void register_serv(char *username, char *res) {
     char filename[20]; 
-    sprintf(filename, "./claves/%d.txt", key);  // Convertimos la clave en string y añadimos el directorio
+    sprintf(filename, "../usuarios/%s.txt", username);  // Convertimos la clave en string y añadimos el directorio
     FILE *checkExistFile = fopen(filename, "r");
     if (checkExistFile != NULL) {
         fclose(checkExistFile);
-        perror("Clave utilizada previamente, escoja otra \n");
-        sprintf(res, "-1");
+        perror("Usuario registrado previamente\n");
+        sprintf(res, "1");
         return;
     }
     
     FILE *clavesFile = fopen(filename, "w+");
     if (clavesFile == NULL) {
         perror("Error al abrir el archivo");
-        sprintf(res, "-1");
+        sprintf(res, "2");
         return;
     }
-
-    // Insertar la nueva clave-valor
-    fprintf(clavesFile, "%d %s %d %s", key, value1, N_value2, V_value2); 
-    fprintf(clavesFile, "\n"); 
-    fclose(clavesFile);
-    printf("%d %s %d %s", key, value1, N_value2, V_value2); 
     sprintf(res, "0");
     return;
 }
+
+void unregister_serv(char *username, char *res) {
+    char filename[20]; 
+    sprintf(filename, "../usuarios/%s.txt", username);
+
+    // Check if the file exists
+    if (access(filename, F_OK) != 0) {
+        // File does not exist
+        perror("Usuario no registrado\n");
+        sprintf(res, "1");
+        return;
+    }
+
+    // Attempt to remove the file
+    if (remove(filename) != 0) {
+        // Error occurred while removing the file
+        perror("Error al eliminar el archivo\n");
+        sprintf(res, "2");
+        return;
+    }
+
+    // File successfully removed
+    sprintf(res, "0");
+}
+
 
 void get_value_serv(int key, char *value1, int *N_value2, char *V_value2, char *res) {
     char filename[20]; 
@@ -125,7 +144,7 @@ void delete_value_serv(int key, char *res) {
 void modify_value_serv(int key, char *value1, int N_value2, char *V_value2, char *res) {
     
     delete_value_serv(key, res);
-    set_value_serv(key, value1, N_value2, V_value2, res);
+    //set_value_serv(key, value1, N_value2, V_value2, res);
     return;
 }
 

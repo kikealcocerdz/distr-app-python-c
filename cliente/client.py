@@ -84,7 +84,7 @@ class client :
     
     @staticmethod
     def connect(user):
-        print("Unregistering user: " + user)
+        print("Connecting user: " + user)
         try:
             server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_sock.bind(('localhost', 0))
@@ -170,8 +170,8 @@ class client :
 
     @staticmethod
     def  listusers() :
-        #  Write your code here
-        return client.RC.ERROR
+        print("Listing users")
+        
 
     @staticmethod
     def  listcontent(user) :
@@ -180,8 +180,36 @@ class client :
 
     @staticmethod
     def  getfile(user,  remote_FileName,  local_FileName) :
-        #  Write your code here
-        return client.RC.ERROR
+        print("User " + user + " wants to download file " + remote_FileName + " to " + local_FileName)
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server_address = (client._server, client._port)
+            sock.connect(server_address)
+            
+            message = "GET_FILE\0"
+            print('Sending message: ' + message)
+            sock.sendall(message.encode())
+            print('Sending user: ' + user)
+            sock.sendall(user.encode() + "\0".encode())
+            print('Sending remote file name: ' + remote_FileName)
+            sock.sendall(remote_FileName.encode() + "\0".encode())
+            print('Sending local file name: ' + local_FileName)
+            sock.sendall(local_FileName.encode() + "\0".encode())
+            
+            msg = sock.recv(1)  # Wait for server response
+            print('Received message: ' + msg.decode()   )
+            sock.close()  # Cierra el socket después de usarlo
+
+            return client.RC.OK
+        
+        except Exception as e:
+            print("Exception getting the file:", str(e))
+            return client.RC.ERROR
+        
+        finally:
+            sock.close()
+        
+
 
     # *
     # **

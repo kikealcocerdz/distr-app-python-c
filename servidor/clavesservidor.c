@@ -94,6 +94,22 @@ void unregister_serv(char *username, char *res) {
     sprintf(res, "0");
 }
 
+void connect_serv(char *client_ip, char *client_port, char *res) {
+    char foldername[20]; 
+    sprintf(foldername, "../usuarios/%s", username);
+
+    // Check if the folder exists
+    if (access(foldername, F_OK) != 0) {
+        // Folder does not exist
+        perror("Usuario no registrado\n");
+        sprintf(res, "1");
+        return;
+    }
+
+    // Folder exists
+    sprintf(res, "0");
+    return;
+}
 
 void get_value_serv(int key, char *value1, int *N_value2, char *V_value2, char *res) {
     char filename[20]; 

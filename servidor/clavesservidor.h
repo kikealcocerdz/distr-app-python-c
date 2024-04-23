@@ -6,6 +6,7 @@
 void init_serv(char *res);
 void register_serv(char *username, char *res);
 void unregister_serv(char *username, char *res);
+void connect_serv(char *username, char *res);
 
 void get_value_serv(int key, char *value1, int *N_value2, char *V_value2, char *res);
 void modify_value_serv(int key, char *value1, int N_value2, char *V_value2, char *res);

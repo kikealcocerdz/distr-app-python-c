@@ -1,6 +1,7 @@
 from enum import Enum
 import argparse
 import socket
+import threading
 import sys
 
 class client :
@@ -82,32 +83,54 @@ class client :
 
     
     @staticmethod
-    def  connect(user) :
+    def connect(user):
         print("Unregistering user: " + user)
         try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            server_address = (client._server, client._port)
-            sock.connect(server_address)
-            
-            message = "UNREGISTER\0"
+            server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server_sock.bind(('localhost', 0))
+            server_sock.listen(1)
+            free_server, free_port = server_sock.getsockname()
+            print('Listening on port: ' + str(free_port))
+            print('Server address: ' + str(free_server))
+
+            def handle_client_requests():
+                while True:
+                    connection, client_address = server_sock.accept()
+                    # Your logic to handle client requests goes here
+                    data = connection.recv(1024).decode()
+                    if data == "GET_PORT":
+                        print('Sending free port: ' + str(free_port))
+                        connection.sendall(str(free_port).encode())
+                    else:
+                        # Handle other client requests
+                        pass
+
+            thread = threading.Thread(target=handle_client_requests)
+            thread.start()
+
+            message = "CONNECT\0"
             print('Sending message: ' + message)
             sock.sendall(message.encode())
-            
+
             print('Sending user: ' + user)
-            sock.sendall(user.encode() + "\0".encode())
+            sock.sendall(user.encode() + b"\0")  
+            sock.sendall(str(free_port).encode())  
             respuesta = sock.recv(1024).decode("utf-8")
             if respuesta[0] == "0":
-                print('UNREGISTER OK')
+                print('CONNECT OK')
             elif respuesta[0] == "1":
                 print('USER DOES NOT EXIST')
             elif respuesta[0] == "2":
-                print('REGISTER FAIL')
+                print('USER ALREADY CONNECTED')
             else:
-                print('REGISTER FAIL')
-            
+                print('CONNECT FAIL')
+
         except Exception as e:
-            print("Exception during unregistration:", str(e))
+            print("Exception during connection:", str(e))
             return client.RC.ERROR
+        finally:
+            sock.close()
+
 
 
     
@@ -262,7 +285,7 @@ class client :
 
         if ((args.p < 1024) or (args.p > 65535)):
             parser.error("Error: Port must be in the range 1024 <= port <= 65535");
-            return False;
+            return False
         
         client._server = args.s
         client._port = args.p

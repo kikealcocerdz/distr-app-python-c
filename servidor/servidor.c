@@ -73,11 +73,20 @@ void tratar_mensaje(void *arg) {
             printf("Usuario recibido para borrar su registro: %s\n", attr2);
             break;
         case '2':
-            // get_value_serv(key, value1, &N_Value2, V_Value2, res);
+            printf("CONNECT2\n");
+            if (readLine(sc, (char *)&attr2, MAXSIZE) == -1) {
+                perror("error al recvMessage 2");
+                return;
+            }
+            connect_serv(attr2, res);
             break;
         case '3':
-            // modify_value_serv(key, value1, N_Value2, V_Value2, res);
-            break;
+            printf("DISCONNECT2\n");
+            if (readLine(sc, (char *)&attr2, MAXSIZE) == -1) {
+                perror("error al recvMessage 2");
+                return;
+            }
+            
         case '4':
             printf("DELETING2\n");
             if (readLine(sc, (char *)&attr2, MAXSIZE) == -1) {

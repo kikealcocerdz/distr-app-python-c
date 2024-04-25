@@ -51,6 +51,8 @@ void init_serv(char *res) {
     sprintf(res, "0");
     return; 
 }
+
+
 void register_serv(char *username, char *res) {
     char foldername[20]; 
     sprintf(foldername, "../usuarios/%s", username);  // Convertimos el nombre de usuario en string y añadimos el directorio
@@ -94,7 +96,8 @@ void unregister_serv(char *username, char *res) {
     sprintf(res, "0");
 }
 
-void connect_serv(char *client_ip, char *client_port, char *res) {
+void connect_serv(char *username, char *free_port, char *res) {
+    printf("Cliente %s ha pasado el puerto %s\n", username, free_port);
     char foldername[20]; 
     sprintf(foldername, "../usuarios/%s", username);
 
@@ -106,10 +109,119 @@ void connect_serv(char *client_ip, char *client_port, char *res) {
         return;
     }
 
-    // Folder exists
+    // Check if username is on conectados.txt
+    FILE *conectadosFile = fopen("../usuarios/conectados.txt", "r");
+    if (conectadosFile == NULL) {
+        perror("Error al abrir conectados file\n");
+        sprintf(res, "3");
+        return;
+    }
+
+    char user[256];
+    while (fscanf(conectadosFile, "%s", user) == 1) {
+        if (strcmp(user, username) == 0) {
+            fclose(conectadosFile);
+            sprintf(res, "2");
+            return;
+        }
+    }
+    fclose(conectadosFile);
     sprintf(res, "0");
     return;
 }
+
+void disconnect_serv(char *username, char *res) {
+    char foldername[20]; 
+    sprintf(foldername, "../usuarios/%s", username);
+
+    // Check if the folder exists
+    if (access(foldername, F_OK) != 0) {
+        // Folder does not exist
+        perror("Usuario no registrado\n");
+        sprintf(res, "1");
+        return;
+    }
+
+    // Check if username is on conectados.txt
+    FILE *conectadosFile = fopen("../usuarios/conectados.txt", "r");
+    if (conectadosFile == NULL) {
+        perror("Error al abrir conectados file\n");
+        sprintf(res, "3");
+        return;
+    }
+
+    char user[256];
+    while (fscanf(conectadosFile, "%s", user) == 1) {
+        if (strcmp(user, username) == 0) {
+            fclose(conectadosFile);
+            sprintf(res, "0");
+            return;
+        }
+    }
+    fclose(conectadosFile);
+    sprintf(res, "2");
+    return;
+}
+
+void publish_serv(char *username, char *fileName, char *description, char *res) {
+    char foldername[20]; 
+    sprintf(foldername, "../usuarios/%s", username);
+
+    // Check if the folder exists
+    if (access(foldername, F_OK) != 0) {
+        // Folder does not exist
+        perror("Usuario no registrado\n");
+        sprintf(res, "1");
+        return;
+    }
+
+    // Check if username is on conectados.txt
+    FILE *conectadosFile = fopen("../usuarios/conectados.txt", "r");
+    if (conectadosFile == NULL) {
+        perror("Error al abrir conectados file\n");
+        sprintf(res, "3");
+        return;
+    }
+
+    char user[256];
+    while (fscanf(conectadosFile, "%s", user) == 1) {
+        if (strcmp(user, username) == 0) {
+            fclose(conectadosFile);
+            // Verificar si el archivo ya está publicado
+            char filepath[100];
+            sprintf(filepath, "%s/%s", foldername, fileName);
+            if (access(filepath, F_OK) == 0) {
+                // Archivo ya publicado
+                perror("El archivo ya está publicado\n");
+                sprintf(res, "3");
+                return;
+            }
+
+            // Crear el archivo en la carpeta del usuario
+            FILE *file = fopen(filepath, "w");
+            if (file == NULL) {
+                perror("Error al crear el archivo\n");
+                sprintf(res, "4");
+                return;
+            }
+
+            // Escribir la descripción en el archivo
+            fprintf(file, "%s", description);
+
+            // Cerrar el archivo
+            fclose(file);
+
+            // Actualizar el archivo de registros si es necesario
+
+            sprintf(res, "0");
+            return;
+        }
+    }
+    fclose(conectadosFile);
+    sprintf(res, "2");
+    return;
+}
+
 
 void get_value_serv(int key, char *value1, int *N_value2, char *V_value2, char *res) {
     char filename[20]; 

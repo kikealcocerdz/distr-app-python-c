@@ -2,12 +2,12 @@
 
 all: servidor
 
-servidor: clavesservidor.c servidor.c 
-	gcc clavesservidor.c comm.c servidor.c -L -lclaves -o servidor
+servidor: clavesservidor.c servidor.c comm.c
+	gcc clavesservidor.c comm.c servidor.c -L. -o servidor
 
 clean:
 	rm -f servidor
 
 run-servidor: servidor
-	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SOURCE_DIR) ./servidor 4500
+	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(SOURCE_DIR) ./servidor 3000
 

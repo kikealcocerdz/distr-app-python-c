@@ -18,7 +18,7 @@ void tratar_mensaje(void *arg) {
     int sc = *(int *)arg;
     int ret;
     char op='\0';
-    char value1[256]="", operacion[256]="", res[256]="", attr2[256]="";
+    char value1[256]="", operacion[256]="", res[256]="", attr2[256]="", attr3[256]="";
     char V_Value2[256]="";
     int N_Value2, key;
 
@@ -78,7 +78,12 @@ void tratar_mensaje(void *arg) {
                 perror("error al recvMessage 2");
                 return;
             }
-            connect_serv(attr2, res);
+            
+            if (readLine(sc, (char *)&attr3, MAXSIZE) == -1) {
+                perror("error al recvMessage 3");
+                return;
+            }
+            connect_serv(attr2, attr3, res);
             break;
         case '3':
             printf("DISCONNECT2\n");

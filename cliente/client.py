@@ -50,6 +50,7 @@ class client :
         except Exception as e:
             print("Exception during registration:", str(e))
             return client.RC.ERROR
+        
 
    
     @staticmethod
@@ -78,71 +79,114 @@ class client :
             
         except Exception as e:
             print("Exception during unregistration:", str(e))
-            return client.RC.ERROR
 
+    @staticmethod
+    def handle_server_connection(user, server_sock, free_server, free_port):
+        try:
+            print('Server connection thread started on port:', free_port, user, free_server)
+            while True:
+                connection, client_address = server_sock.accept()
+                with open("../usuarios/conectados.txt", "a+") as file:
+                    file.write(f"{user} {free_server} {free_port}\n")
+                respuesta_puerto = connection.recv(1024).decode("utf-8")
+                print('Received message: ' + respuesta_puerto)
+                
+                                
+        except Exception as e:
+                print("Exception in server connection thread:", str(e))
 
-    
     @staticmethod
     def connect(user):
         print("Connecting user: " + user)
         try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server_address = (client._server, client._port)
+            sock.connect(server_address)
+
             server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_sock.bind(('localhost', 0))
             server_sock.listen(1)
             free_server, free_port = server_sock.getsockname()
-            print('Listening on port: ' + str(free_port))
-            print('Server address: ' + str(free_server))
+            print('Free server: ' + str(free_server))
+            print('Free port: ' + str(free_port))
 
-            def handle_client_requests():
-                while True:
-                    connection, client_address = server_sock.accept()
-                    # Your logic to handle client requests goes here
-                    data = connection.recv(1024).decode()
-                    if data == "GET_PORT":
-                        print('Sending free port: ' + str(free_port))
-                        connection.sendall(str(free_port).encode())
-                    else:
-                        # Handle other client requests
-                        pass
+            # Start a new thread to handle server connection
+            server_thread = threading.Thread(target=client.handle_server_connection, args=(user, server_sock, free_server, free_port))
+            server_thread.start()
 
-            thread = threading.Thread(target=handle_client_requests)
-            thread.start()
 
             message = "CONNECT\0"
             print('Sending message: ' + message)
             sock.sendall(message.encode())
 
-            print('Sending user: ' + user)
-            sock.sendall(user.encode() + b"\0")  
-            sock.sendall(str(free_port).encode())  
+            print('Sending user: ' + user) 
+            sock.sendall(user.encode() + b"\0")
+
+            print('Sending port: ' + str(free_port))
+            sock.sendall(str(free_port).encode() + b"\0")
+
             respuesta = sock.recv(1024).decode("utf-8")
+            print('Received message: ' + respuesta)
+            
             if respuesta[0] == "0":
+                sock_thread = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                thread_address = (free_server, free_port)
+                sock_thread.connect(thread_address)  
                 print('CONNECT OK')
+
             elif respuesta[0] == "1":
-                print('USER DOES NOT EXIST')
+                print('CONNECT FAIL, USER DOES NOT EXIST')
             elif respuesta[0] == "2":
                 print('USER ALREADY CONNECTED')
             else:
                 print('CONNECT FAIL')
 
+            # Close the connection after processing
+            sock.close()
+
         except Exception as e:
             print("Exception during connection:", str(e))
             return client.RC.ERROR
-        finally:
-            sock.close()
-
-
-
     
     @staticmethod
     def  disconnect(user) :
-        #  Write your code here
-        return client.RC.ERROR
+        print("Disconnecting user: " + user)
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server_address = (client._server, client._port)
+            sock.connect(server_address)
+            
+            message = "DISCONNECT\0"
+            print('Sending message: ' + message)
+            sock.sendall(message.encode())
+            
+            print('Sending user: ' + user)
+            sock.sendall(user.encode() + "\0".encode())
+            respuesta = sock.recv(1024).decode("utf-8")
+            if respuesta[0] == "0":
+                print('DISCONNECT OK')
+            elif respuesta[0] == "1":
+                print('USER DOES NOT EXIST')
+            elif respuesta[0] == "2":
+                print('DISCONNECT FAIL')
+            else:
+                print('DISCONNECT FAIL')
+            
+        except Exception as e:
+            print("Exception during disconnection:", str(e))
+            return client.RC.ERROR
 
     @staticmethod
-    def  publish(fileName,  description) :
-        #  Write your code here
-        return client.RC.ERROR
+    def publish(fileName, description, free_server, free_port):
+        try:
+            sock_thread = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock_thread.connect((free_server, free_port))  # Conectarse al servidor
+            # Enviar el mensaje
+            msg = f"PUBLISH\0{fileName}\0{description}\0"
+            sock_thread.sendall(msg.encode())
+            print("Message published successfully.")
+        except Exception as e:
+            print("Exception during publishing:", str(e))
 
     @staticmethod
     def  delete(fileName) :

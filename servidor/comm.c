@@ -56,6 +56,8 @@
 
       printf("conexión aceptada de IP: %s y puerto: %d\n",
               inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+      
+    // getSocketId(sc);
 
       return sc ;
   }

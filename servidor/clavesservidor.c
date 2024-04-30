@@ -109,23 +109,29 @@ void connect_serv(char *username, char *free_port, char *res) {
         return;
     }
 
+    printf("Usuario %s registrado\n", username);
     // Check if username is on conectados.txt
-    FILE *conectadosFile = fopen("../usuarios/conectados.txt", "r");
+    FILE *conectadosFile = fopen("../usuarios/conectados.txt", "a+");
+
+    char user[256];
+    while (fscanf(conectadosFile, "%s", user) == 1) {
+        if (strcmp(username, user) == 0) {
+            fclose(conectadosFile);
+            sprintf(res, "2");
+            return;
+        }
+    }
+
     if (conectadosFile == NULL) {
         perror("Error al abrir conectados file\n");
         sprintf(res, "3");
         return;
     }
 
-    char user[256];
-    while (fscanf(conectadosFile, "%s", user) == 1) {
-        if (strcmp(user, username) == 0) {
-            fclose(conectadosFile);
-            sprintf(res, "2");
-            return;
-        }
-    }
+    printf("Archivo conectados.txt abierto\n");
+    fprintf(conectadosFile, "%s %s \n", username, free_port);
     fclose(conectadosFile);
+
     sprintf(res, "0");
     return;
 }
@@ -183,82 +189,48 @@ void publish_serv(char *username, char *fileName, char *description, char *res) 
         return;
     }
 
-    char user[256];
-    while (fscanf(conectadosFile, "%s", user) == 1) {
-        if (strcmp(user, username) == 0) {
-            fclose(conectadosFile);
-            // Verificar si el archivo ya está publicado
-            char filepath[100];
-            sprintf(filepath, "%s/%s", foldername, fileName);
-            if (access(filepath, F_OK) == 0) {
-                // Archivo ya publicado
-                perror("El archivo ya está publicado\n");
-                sprintf(res, "3");
-                return;
-            }
-
-            // Crear el archivo en la carpeta del usuario
-            FILE *file = fopen(filepath, "w");
-            if (file == NULL) {
-                perror("Error al crear el archivo\n");
-                sprintf(res, "4");
-                return;
-            }
-
-            // Escribir la descripción en el archivo
-            fprintf(file, "%s", description);
-
-            // Cerrar el archivo
-            fclose(file);
-
-            // Actualizar el archivo de registros si es necesario
-
-            sprintf(res, "0");
-            return;
-        }
+    // Write the file inside the user folder
+    char filepath[256];
+    sprintf(filepath, "%s/%s.txt", foldername, fileName);
+    FILE *file = fopen(filepath, "w");
+    if (file == NULL) {
+        perror("Error al abrir el archivo\n");
+        sprintf(res, "4");
+        return;
     }
-    fclose(conectadosFile);
-    sprintf(res, "2");
+    fprintf(file, "%s\n", description);
+    fclose(file);
+
+    sprintf(res, "0");
     return;
 }
 
-
-void get_value_serv(int key, char *value1, int *N_value2, char *V_value2, char *res) {
-    char filename[20]; 
-    sprintf(filename, "./claves/%d.txt", key);
-    FILE *clavesFile = fopen(filename, "r");
-    
-    if (clavesFile == NULL) {
-        perror("Error al abrir claves file\n");
-        sprintf(res, "-1");
+void delete_serv(char *username, char *fileName, char *res) {
+    char foldername[20]; 
+    sprintf(foldername, "../usuarios/%s", username);
+    printf("Foldername: %s\n", foldername);
+    // Check if the folder exists
+    if (access(foldername, F_OK) != 0) {
+        // Folder does not exist
+        perror("Usuario no registrado\n");
+        sprintf(res, "1");
         return;
     }
 
-    // Leer el contenido del archivo y almacenarlo en las variables
-    if (fscanf(clavesFile, "%d %s %d %s", &key, value1, N_value2, V_value2) != 4) {
-        fclose(clavesFile);
-        perror("Error get_value valores esperados\n");
-        sprintf(res, "-1");
+    // Check if username is on conectados.txt
+    FILE *conectadosFile = fopen("../usuarios/conectados.txt", "r");
+    if (conectadosFile == NULL) {
+        perror("Error al abrir conectados file\n");
+        sprintf(res, "3");
         return;
     }
 
-    fclose(clavesFile);
-    sprintf(res, "0/%s/%d/%s", value1, *N_value2, V_value2);
-    return;
-}
-
-void delete_value_serv(int key, char *res) {
-    char filename[20]; 
-    sprintf(filename, "./claves/%d.txt", key); 
-
-    // Verificar si el archivo existe
-    if (access(filename, F_OK) != 0) {
-        sprintf(res, "-1");
-        return;
-    }
-
-    if (unlink(filename) == -1) {
-        sprintf(res, "-1");
+    // Write the file inside the user folder
+    char filepath[256];
+    sprintf(filepath, "%s/%s.txt", foldername, fileName);
+    if (remove(filepath) != 0) {
+        perror("Error al eliminar el archivo\n");
+        sprintf(res, "4");
         return;
     }
 
@@ -266,32 +238,35 @@ void delete_value_serv(int key, char *res) {
     return;
 }
 
-void modify_value_serv(int key, char *value1, int N_value2, char *V_value2, char *res) {
-    
-    delete_value_serv(key, res);
-    //set_value_serv(key, value1, N_value2, V_value2, res);
-    return;
-}
-
-
-void exists_serv(int key, char*res) {
-    char filename[20]; 
-    sprintf(filename, "./claves/%d.txt", key); 
-
-    FILE *clavesFile = fopen(filename, "r");
-    if (clavesFile == NULL) {
-        sprintf(res, "0");
+void list_users_serv(char *username, char *res) {
+    char foldername[20]; 
+    sprintf(foldername, "../usuarios/%s", username);
+    printf("Foldername: %s\n", foldername);
+    // Check if the folder exists
+    if (access(foldername, F_OK) != 0) {
+        // Folder does not exist
+        perror("Usuario no registrado\n");
+        sprintf(res, "1");
         return;
     }
-    while (fscanf(clavesFile, "%d %s %d", &key_leida, valor1, &N_value2) == 3) {
-        if (key_leida == key) {
-            fclose(clavesFile);
-            sprintf(res, "1");
-            return;
-        }
+
+    // Check if username is on conectados.txt
+    FILE *conectadosFile = fopen("../usuarios/conectados.txt", "r");
+    if (conectadosFile == NULL) {
+        perror("Error al abrir conectados file\n");
+        sprintf(res, "3");
+        return;
     }
-    
-    fclose(clavesFile);
-    sprintf(res, "-1");
+
+    // Write the file inside the user folder
+    char filepath[256];
+    sprintf(filepath, "%s/%s.txt", foldername, fileName);
+    if (remove(filepath) != 0) {
+        perror("Error al eliminar el archivo\n");
+        sprintf(res, "4");
+        return;
+    }
+
+    sprintf(res, "0");
     return;
 }

@@ -18,7 +18,7 @@ void tratar_mensaje(void *arg) {
     int sc = *(int *)arg;
     int ret;
     char op='\0';
-    char value1[256]="", operacion[256]="", res[256]="", attr2[256]="", attr3[256]="";
+    char value1[256]="", operacion[256]="", res[256]="", attr2[256]="", attr3[256]="", attr4[256]="";
     char V_Value2[256]="";
     int N_Value2, key;
 
@@ -78,7 +78,6 @@ void tratar_mensaje(void *arg) {
                 perror("error al recvMessage 2");
                 return;
             }
-            
             if (readLine(sc, (char *)&attr3, MAXSIZE) == -1) {
                 perror("error al recvMessage 3");
                 return;
@@ -86,11 +85,22 @@ void tratar_mensaje(void *arg) {
             connect_serv(attr2, attr3, res);
             break;
         case '3':
-            printf("DISCONNECT2\n");
+            printf("PUBLISH2\n");
             if (readLine(sc, (char *)&attr2, MAXSIZE) == -1) {
                 perror("error al recvMessage 2");
                 return;
             }
+            if (readLine(sc, (char *)&attr3, MAXSIZE) == -1) {
+                perror("error al recvMessage 3");
+                return;
+            }
+            if (readLine(sc, (char *)&attr4, MAXSIZE) == -1) {
+                perror("error al recvMessage 3");
+                return;
+            }
+            publish_serv(attr2, attr3, attr4, res);
+            printf("Fichero recibido para publicar: %s\n", attr2);
+            break;
             
         case '4':
             printf("DELETING2\n");
@@ -98,13 +108,28 @@ void tratar_mensaje(void *arg) {
                 perror("error al recvMessage 2");
                 return;
             }
-            printf("Fichero recibido para borrar: %s\n", attr2);
-            //Llamar a la funcion de borrar y returnear un valor
-            strcpy(res, "Fichero borrado");
+            if (readLine(sc, (char *)&attr3, MAXSIZE) == -1) {
+                perror("error al recvMessage 2");
+                return;
+            }
+            delete_serv(attr2, attr3, res);
             break;
+            
         case '5':
-            exists_serv(key, res);
+            printf("LIST_USERS2\n");
+            if (readLine(sc, (char *)&attr2, MAXSIZE) == -1) {
+                perror("error al recvMessage 2");
+                return;
+            }
+            list_users_serv(attr2, res);
             break;
+
+        case '7':
+            printf("DISCONNECT2\n");
+            if (readLine(sc, (char *)&attr2, MAXSIZE) == -1) {
+                perror("error al recvMessage 2");
+                return;
+            }
         default:
             strcpy(res, "Operación no válida");
             break;
@@ -149,6 +174,7 @@ int main(int argc, char *argv[]) {
 
     while (1) {
         sc = serverAccept(sd);
+        printf("Sc tiene valor %d\n", sc);
         if (sc < 0) {
             printf("Error en serverAccept\n");
             continue;

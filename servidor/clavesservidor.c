@@ -72,6 +72,7 @@ void register_serv(char *username, char *res) {
     sprintf(res, "0");
     return;
 }
+
 void unregister_serv(char *username, char *res) {
     char foldername[20]; 
     sprintf(foldername, "../usuarios/%s", username);
@@ -138,35 +139,53 @@ void connect_serv(char *username, char *free_port, char *res) {
 
 void disconnect_serv(char *username, char *res) {
     char foldername[20]; 
+    FILE *conectadosFile = fopen("../usuarios/conectados.txt", "r+");
+    FILE *tempFile = fopen("../usuarios/temp.txt", "w");
     sprintf(foldername, "../usuarios/%s", username);
 
     // Check if the folder exists
     if (access(foldername, F_OK) != 0) {
         // Folder does not exist
-        perror("Usuario no registrado\n");
         sprintf(res, "1");
+        fclose(conectadosFile);
         return;
     }
 
-    // Check if username is on conectados.txt
-    FILE *conectadosFile = fopen("../usuarios/conectados.txt", "r");
+    // Check if conectados.txt exists
     if (conectadosFile == NULL) {
-        perror("Error al abrir conectados file\n");
+        // Error opening conectados file
         sprintf(res, "3");
         return;
     }
 
-    char user[256];
-    while (fscanf(conectadosFile, "%s", user) == 1) {
-        if (strcmp(user, username) == 0) {
-            fclose(conectadosFile);
-            sprintf(res, "0");
-            return;
+    char line[256];
+    int userFound = 0;
+
+    // Read file line by line
+    while (fgets(line, sizeof(line), conectadosFile)) {
+        if (strstr(line, username) != NULL) {
+            // Skip the line if it contains the username
+            userFound = 1;
+            continue;
         }
+        // Write the line to the temporary file
+        fputs(line, tempFile);
     }
+
     fclose(conectadosFile);
-    sprintf(res, "2");
-    return;
+    fclose(tempFile);
+
+    // Replace the original file with the temporary one
+    remove("../usuarios/conectados.txt");
+    rename("../usuarios/temp.txt", "../usuarios/conectados.txt");
+
+    if (userFound) {
+        // Notify success
+        sprintf(res, "0");
+    } else {
+        // Notify failure
+        sprintf(res, "2");
+    }
 }
 
 void publish_serv(char *username, char *fileName, char *description, char *res) {
@@ -238,6 +257,7 @@ void delete_serv(char *username, char *fileName, char *res) {
     return;
 }
 
+/*
 void list_users_serv(char *username, char *res) {
     char foldername[20]; 
     sprintf(foldername, "../usuarios/%s", username);
@@ -260,7 +280,6 @@ void list_users_serv(char *username, char *res) {
 
     // Write the file inside the user folder
     char filepath[256];
-    sprintf(filepath, "%s/%s.txt", foldername, fileName);
     if (remove(filepath) != 0) {
         perror("Error al eliminar el archivo\n");
         sprintf(res, "4");
@@ -270,3 +289,4 @@ void list_users_serv(char *username, char *res) {
     sprintf(res, "0");
     return;
 }
+*/

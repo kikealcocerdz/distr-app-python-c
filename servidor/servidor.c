@@ -121,7 +121,6 @@ void tratar_mensaje(void *arg) {
                 perror("error al recvMessage 2");
                 return;
             }
-            list_users_serv(attr2, res);
             break;
 
         case '7':
@@ -130,6 +129,9 @@ void tratar_mensaje(void *arg) {
                 perror("error al recvMessage 2");
                 return;
             }
+            disconnect_serv(attr2, res);
+            break;
+            
         default:
             strcpy(res, "Operación no válida");
             break;

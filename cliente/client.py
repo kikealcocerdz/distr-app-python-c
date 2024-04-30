@@ -87,7 +87,7 @@ class client :
     @staticmethod
     def handle_server_connection(user, server_sock, free_server, free_port):
         try:
-            while (isConnected):
+            while (client._isConnected):
                 print('Server connection thread started on port:', free_port, user, free_server)
                 while True:
                     connection, client_address = server_sock.accept()
@@ -166,7 +166,7 @@ class client :
             sock.sendall(user.encode() + "\0".encode())
             respuesta = sock.recv(1024).decode("utf-8")
             if respuesta[0] == "0":
-                client._serverSock.shutdown()
+                client._serverSock.shutdown(socket.SHUT_RDWR)
                 client._serverSock.close()
                 client._isConnected = False
                 client._serverThread.join()

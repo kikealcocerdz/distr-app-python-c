@@ -18,27 +18,9 @@ class client :
     _server = None
     _port = -1
     _connected_user = None
-
-from enum import Enum
-import argparse
-import socket
-import threading
-import sys
-
-class client :
-
-    # ******************** TYPES *********************
-    # *
-    # * @brief Return codes for the protocol methods
-    class RC(Enum) :
-        OK = 0
-        ERROR = 1
-        USER_ERROR = 2
-
-    # ****************** ATTRIBUTES ******************
-    _server = None
-    _port = -1
-    _connected_user = None
+    _serverSock = None
+    _isConnected = False
+    _serverThread = None
 
     # ******************** METHODS *******************
 
@@ -105,12 +87,14 @@ class client :
     @staticmethod
     def handle_server_connection(user, server_sock, free_server, free_port):
         try:
-            print('Server connection thread started on port:', free_port, user, free_server)
-            while True:
-                connection, client_address = server_sock.accept()
+            while (isConnected):
+                print('Server connection thread started on port:', free_port, user, free_server)
+                while True:
+                    connection, client_address = server_sock.accept()
 
         except Exception as e:
                 print("Exception in server connection thread:", str(e))
+                client._isConnected = False
 
     @staticmethod
     def connect(user):
@@ -126,9 +110,10 @@ class client :
             free_server, free_port = server_sock.getsockname()
             print('Free server: ' + str(free_server))
             print('Free port: ' + str(free_port))
+            client._serverSock = server_sock
             # Start a new thread to handle server connection
-            server_thread = threading.Thread(target=client.handle_server_connection, args=(user, server_sock, free_server, free_port))
-            server_thread.start()
+            client._serverThread = threading.Thread(target=client.handle_server_connection, args=(user, client._serverSock, free_server, free_port))
+            client._serverThread.start()
 
             message = "CONNECT\0"
             print('Sending message: ' + message)
@@ -148,6 +133,7 @@ class client :
                 thread_address = (free_server, free_port)
                 sock_thread.connect(thread_address)  
                 client._connected_user = user
+                client._isConnected = True
                 print('CONNECT OK')
 
             elif respuesta[0] == "1":
@@ -180,9 +166,15 @@ class client :
             sock.sendall(user.encode() + "\0".encode())
             respuesta = sock.recv(1024).decode("utf-8")
             if respuesta[0] == "0":
+                client._serverSock.shutdown()
+                client._serverSock.close()
+                client._isConnected = False
+                client._serverThread.join()
                 print('DISCONNECT OK')
+
             elif respuesta[0] == "1":
                 print('USER DOES NOT EXIST')
+
             elif respuesta[0] == "2":
                 print('DISCONNECT FAIL')
             else:

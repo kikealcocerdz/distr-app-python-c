@@ -6,6 +6,7 @@
 #include <string.h>
 #include <netinet/in.h>
 #include <stdlib.h>
+#include <dirent.h>
 #include "comm.h"
 
 #define MAXSIZE 256
@@ -20,7 +21,7 @@ void tratar_mensaje(void *arg) {
     int ret2;
     int res2;
     char op='\0';
-    char value1[256]="", operacion[256]="", res[256]="", res_clients[256]="", attr2[256]="", attr3[256]="", attr4[256]="";
+    char value1[256]="", operacion[256]="", res[256]="", res_clients[256]="", res_username[50]="", attr2[256]="", attr3[256]="", attr4[256]="";
     char V_Value2[256]="";
     int N_Value2, key;
 
@@ -195,6 +196,71 @@ void tratar_mensaje(void *arg) {
             }
 
             break;
+        
+        case '6':
+            printf("LIST_CONTENT2\n");
+            if (readLine(sc, (char *)&attr2, MAXSIZE) == -1) {
+                perror("error al recvMessage 2");
+                return;
+            }
+            if (readLine(sc, (char *)&attr3, MAXSIZE) == -1) {
+                perror("error al recvMessage 3");
+                return;
+            }
+            printf("Username recibido: %s\n", attr2);
+            list_content_serv(attr2, attr3, res, &res2, res_username);
+            printf("Respuesta: %s\n", res);
+            printf("Respuesta: %d\n", res2);
+            printf("Respuesta usuario: %s\n", res_username);
+            ret = sendMessage(sc, res, strlen(res) + 1);
+            if (ret == -1) {
+                pthread_mutex_unlock(&mutex_mensaje);
+                return;
+            }
+            sprintf(res_clients, "%d", res2);
+            ret2 = sendMessage(sc, res_clients, res2 + 1);
+            if (ret2 == -1) {
+                pthread_mutex_unlock(&mutex_mensaje);
+                return;
+            }
+
+            char ruta[100];
+            int fileCount = 0;
+            sprintf(ruta, "../usuarios/%s", res_username);
+            DIR *dir;
+            struct dirent *entry;
+            if ((dir = opendir(ruta)) != NULL) {
+                while ((entry = readdir(dir)) != NULL && fileCount < res2) {
+                    int ret_cliente;
+                    char res_cliente[512];
+                    if (entry->d_type == DT_REG) { // Solo procesa archivos regulares
+                        char file_path[512];
+                        sprintf(file_path, "%s/%s", ruta, entry->d_name);
+                        FILE *fp = fopen(file_path, "r");
+                        if (fp != NULL) {
+                            char description[256];
+                            fgets(description, sizeof(description), fp); // Lee el contenido del archivo
+                            // Concatenar el nombre del archivo y su contenido en una sola cadena
+                            sprintf(res_cliente, "%s  %s", entry->d_name, description);
+                            // Enviar la cadena que contiene el nombre del archivo y su contenido
+                            ret_cliente = sendMessage(sc, res_cliente, strlen(res_cliente) + 1);
+                            if (ret_cliente == -1) {
+                                fclose(fp);
+                                return; // Manejo del error, tal vez romper el bucle o manejarlo de acuerdo
+                            }
+                            fclose(fp);
+                            fileCount++;
+                        } else {
+                            printf("No se pudo abrir el archivo %s\n", file_path);
+                        }
+                    }
+                }
+                closedir(dir);
+            } else {
+                printf("No se pudo abrir el directorio %s\n", ruta);
+                return;
+            }
+            break;
 
         case '7':
             printf("DISCONNECT2\n");
@@ -210,18 +276,18 @@ void tratar_mensaje(void *arg) {
                 return;
             }
             break;
-            
-        default:
-            strcpy(res, "Operación no válida");
-            break;
-    }
-    mensaje_no_copiado = false;
-    pthread_cond_signal(&cond_mensaje);
-    pthread_mutex_unlock(&mutex_mensaje);
-    close(sc); // Cerrar el socket después de enviar la respuesta
+                
+            default:
+                strcpy(res, "Operación no válida");
+                break;
+        }
+        mensaje_no_copiado = false;
+        pthread_cond_signal(&cond_mensaje);
+        pthread_mutex_unlock(&mutex_mensaje);
+        close(sc); // Cerrar el socket después de enviar la respuesta
 
-    pthread_exit(NULL);
-}
+        pthread_exit(NULL);
+    }
 
 int main(int argc, char *argv[]) {
     int sd, sc;

@@ -309,3 +309,34 @@ void list_users_serv(char *username, char *res, int *res2) {
     return;
 } 
 
+void list_content_serv(char *username, char *username_folder, char *res, int *res2, char *res_username) {
+    char foldername[50];
+    sprintf(foldername, "../usuarios/%s", username_folder);
+
+    // Check if the folder exists
+    DIR *dir = opendir(foldername);
+    if (dir == NULL) {
+        // Folder does not exist
+        sprintf(res, "Usuario no registrado\n");
+        *res2 = -1; // Indicar que ocurrió un error
+        return;
+    }
+
+    int fileCount = 0;
+    struct dirent *entry;
+
+    // Count files in the directory
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type == DT_REG) { // Regular file
+            fileCount++;
+        }
+    }
+
+    closedir(dir);
+
+    // Set the results
+    sprintf(res, "0");
+    *res2 = fileCount;
+    sprintf(res_username, "%s", username_folder);
+    return;
+}

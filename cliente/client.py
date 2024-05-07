@@ -252,8 +252,46 @@ class client :
 
     @staticmethod
     def  listcontent(user) :
-        #  Write your code here
-        return client.RC.ERROR
+        print("Listing content of user: " + user)
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server_address = (client._server, client._port)
+            sock.connect(server_address)
+            
+            message = "LIST_CONTENT\0"
+            print('Sending message: ' + message)
+            sock.sendall(message.encode())
+            print('Sending connected user: ' + client._connected_user)
+            sock.sendall(client._connected_user.encode() + "\0".encode())
+            
+            print('Sending user to get files: ' + user)
+            sock.sendall(user.encode() + "\0".encode())
+
+            
+            respuesta = sock.recv(1024).decode("utf-8")
+            numero_de_archivos = sock.recv(1024).decode("utf-8")
+            numero_de_archivos = numero_de_archivos.strip('\x00')
+
+            print('Received message: ' + respuesta)
+            print('Received number of files: ' + numero_de_archivos)
+
+            if respuesta[0] == "0":
+                print('LIST_CONTENT OK')
+                for i in range(int(numero_de_archivos)):
+                    archivo = sock.recv(1024).decode("utf-8")
+                    print("\t" + archivo, end='')  # Imprimir un tabulador seguido del nombre del archivo                    sys.stdout.flush()  # Forzar la salida inmediata
+                    print()  # Agregar un salto de línea después de cada archivo
+
+            elif respuesta[0] == "1":
+                print('LIST_CONTENT FAIL, USER DOES NOT EXIST')
+            elif respuesta[0] == "2":
+                print('LIST_CONTENT FAIL, USER NOT CONNECTED')
+            else:
+                print('LIST_CONTENT FAIL')
+            
+        except Exception as e:
+            print("Exception listing content:", str(e))
+            return client.RC.ERROR
 
     @staticmethod
     def  getfile(user,  remote_FileName,  local_FileName) :

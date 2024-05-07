@@ -3,6 +3,7 @@ import argparse
 import socket
 import threading
 import sys
+import re
 
 class client :
 
@@ -21,6 +22,8 @@ class client :
     _serverSock = None
     _isConnected = False
     _serverThread = None
+    _list_users = { }
+
 
     # ******************** METHODS *******************
 
@@ -176,6 +179,44 @@ class client :
             return client.RC.ERROR
 
     @staticmethod
+    def publish(fileName, description):
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server_address = (client._server, client._port)
+            sock.connect(server_address)
+
+            message = "PUBLISH\0"
+            print('Sending message: ' + message)
+            sock.sendall(message.encode())
+
+            print('Sending user: ' + str(client._connected_user)) 
+            sock.sendall(client._connected_user.encode() + "\0".encode())
+
+            print('Sending file name: ' + fileName)
+            sock.sendall(fileName.encode() + "\0".encode())
+
+            print('Sending description: ' + description)
+            sock.sendall(description.encode() + "\0".encode())
+
+            respuesta = sock.recv(1024).decode("utf-8")
+            
+            print('Received message: ' + respuesta[0])
+            if respuesta[0] == "0":
+                print('PUBLISH OK')
+            elif respuesta[0] == "1":
+                print('PUBLISH FAIL, USER DOES NOT EXIST')
+            elif respuesta[0] == "2":
+                print('PUBLISH FAIL, USER NOT CONNECTED')
+            elif respuesta[0] == "3":
+                print('PUBLISH FAIL, FILE ALREADY EXISTS')
+            else:
+                print('PUBLISH FAIL')
+
+        except Exception as e:
+            print("Exception during publishing:", str(e))
+            return client.RC.ERROR
+
+    @staticmethod
     def  delete(fileName) :
         print("Deleting file: " + fileName)
         try:
@@ -236,9 +277,14 @@ class client :
 
             if respuesta[0] == "0":
                 print('LIST_USERS OK')
-                for i in range(int(numero_de_conectados)):
+                for i in range(1):
                     usuario_conectado = sock.recv(1024).decode("utf-8")
                     print("\t" + usuario_conectado + "\n")
+                    usuario_conectado_cleaned = re.sub(r'[^\w.\s]', '', usuario_conectado)
+                    # Here, [^\w.\s] means any character that is not alphanumeric, a dot, or whitespace
+                    print(usuario_conectado_cleaned.split(" "))
+                    #client._list_users.update({ : usuario_conectado[:-1] })
+                print(client._list_users)
 
             elif respuesta[0] == "1":
                 print('LIST_USERS FAIL')
@@ -298,8 +344,7 @@ class client :
         print("User " + user + " wants to download file " + remote_FileName + " to " + local_FileName)
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            server_address = (client._server, client._port)
-            sock.connect(server_address)
+            sock.connect(client._serverSock)
             
             message = "GET_FILE\0"
             print('Sending message: ' + message)
@@ -311,8 +356,8 @@ class client :
             print('Sending local file name: ' + local_FileName)
             sock.sendall(local_FileName.encode() + "\0".encode())
             
-            msg = sock.recv(1)  # Wait for server response
-            print('Received message: ' + msg.decode()   )
+            respuesta = sock.recv(1024).decode("utf-8")
+            print('Received message: ' + respuesta)
             sock.close()  # Cierra el socket después de usarlo
 
             return client.RC.OK
@@ -331,48 +376,22 @@ class client :
             print('Server connection thread started on port:', free_port, user, free_server)
             while True:
                 connection, client_address = server_sock.accept()
-                client._connected_user = user
-                client._serverSock = (free_server, free_port)
+                print('Connection accepted from:', client_address)
+                message = connection.recv(1024).decode("utf-8")
+                if message == "GET_FILE\0":
+                    print("Received GET FILE request.")
+                    # Aquí puedes proceder con la funcionalidad relacionada con la solicitud de GET FILE
+                else:
+                    print("Received unexpected message:", message)
+                
+        except Exception as e:
+            print("Exception in server connection thread:", str(e))
+                
+
+                
                  
         except Exception as e:
                 print("Exception in server connection thread:", str(e))
-
-    @staticmethod
-    def publish(fileName, description):
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            server_address = (client._server, client._port)
-            sock.connect(server_address)
-
-            message = "PUBLISH\0"
-            print('Sending message: ' + message)
-            sock.sendall(message.encode())
-
-            print('Sending user: ' + str(client._connected_user)) 
-            sock.sendall(client._connected_user.encode() + "\0".encode())
-
-            print('Sending file name: ' + fileName)
-            sock.sendall(fileName.encode() + "\0".encode())
-
-            print('Sending description: ' + description)
-            sock.sendall(description.encode() + "\0".encode())
-
-            respuesta = sock.recv(1024).decode("utf-8")
-            
-            print('Received message: ' + respuesta[0])
-            if respuesta[0] == "0":
-                print('PUBLISH OK')
-            elif respuesta[0] == "1":
-                print('PUBLISH FAIL, USER DOES NOT EXIST')
-            elif respuesta[0] == "2":
-                print('PUBLISH FAIL, USER NOT CONNECTED')
-            elif respuesta[0] == "3":
-                print('PUBLISH FAIL, FILE ALREADY EXISTS')
-            else:
-                print('PUBLISH FAIL')
-
-        except Exception as e:
-            print("Exception during publishing:", str(e))
 
 
 

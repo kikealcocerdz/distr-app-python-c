@@ -10,4 +10,4 @@ client = Client(wsdl=wsdl_url)
 timestamp = client.service.get_timestamp()
 
 # Imprimir el timestamp devuelto por el servicio web
-print("Timestamp recibido del servicio web:", timestamp)
+print(timestamp)

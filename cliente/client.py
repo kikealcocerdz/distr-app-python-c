@@ -5,6 +5,8 @@ import threading
 import sys
 import re
 import os
+from zeep import Client
+
 
 class client :
 
@@ -26,6 +28,10 @@ class client :
     _threadAddress = None
     _list_users = { }
 
+    wsdl_url = 'http://localhost:5000/?wsdl'
+    # Crear un cliente Zeep
+    clientweb = Client(wsdl=wsdl_url)
+
 
     # ******************** METHODS *******************
 
@@ -42,6 +48,15 @@ class client :
             print('Sending message: ' + message)
             sock.sendall(message.encode())
             
+            # Llamar al método get_timestamp del servicio web
+                    
+            wsdl_url = 'http://localhost:5000/?wsdl'
+            # Crear un cliente Zeep
+            clientweb = Client(wsdl=wsdl_url)
+            timestamp = clientweb.service.get_timestamp()
+            print('Timestamp:', timestamp)
+
+
             print('Sending user: ' + user)
             sock.sendall(user.encode() + "\0".encode())
             respuesta = sock.recv(1024).decode()
@@ -501,6 +516,7 @@ class client :
                             print("Syntax error. Use: QUIT")
                     else :
                         print("Error: command " + line[0] + " not valid.")
+                    
             except Exception as e:
                 print("Exception: " + str(e))
 

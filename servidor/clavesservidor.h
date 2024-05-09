@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 
-void init_serv(char *res);
 void register_serv(char *username, char *res);
 void unregister_serv(char *username, char *res);
 void connect_serv(char *username, char *free_port, char *free_server, char *res);

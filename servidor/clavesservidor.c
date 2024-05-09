@@ -16,42 +16,6 @@ char valor1[100];
 int N_value2;
 double V_value2[100];
 
-void init_serv(char *res) {
-
-    // Eliminar el directorio /claves si existe
-    if (access("./claves", F_OK) == 0) {
-        DIR *dir = opendir("./claves");
-        if (dir) {
-            // Si el directorio está lleno, elimina su contenido
-            struct dirent *entry;
-            while ((entry = readdir(dir)) != NULL) {
-                if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
-                    char path[1024];
-                    snprintf(path, sizeof(path), "%s/%s", "./claves", entry->d_name);
-                    remove(path);
-                }
-            }
-            closedir(dir);
-        }
-        // Eliminar el directorio /claves
-        if (remove("./claves") == -1) {
-            perror("Error al eliminar ./claves\n");
-            sprintf(res, "-1");
-            return; 
-        }
-    }
-
-    // Crear el directorio /claves
-    if (mkdir("./claves", 0777) == -1) {
-        perror("Error al eliminar ./claves\n");
-        sprintf(res, "-1");
-        return;  
-    }
-
-    sprintf(res, "0");
-    return; 
-}
-
 
 void register_serv(char *username, char *res) {
     char foldername[20]; 

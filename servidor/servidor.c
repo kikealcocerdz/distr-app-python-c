@@ -186,6 +186,7 @@ void tratar_mensaje(void *arg) {
                 // Read the line to be sent
                 if (fgets(res_cliente, sizeof(res_cliente), fp) != NULL) {
                     // Send the line
+                    printf("Respuesta: %s\n", res_cliente);
                     ret_cliente = sendMessage(sc, res_cliente, strlen(res_cliente) + 1);
                     if (ret_cliente == -1) {
                         fclose(fp);

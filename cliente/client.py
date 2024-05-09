@@ -4,6 +4,7 @@ import socket
 import threading
 import sys
 import re
+import os
 
 class client :
 
@@ -22,6 +23,7 @@ class client :
     _serverSock = None
     _isConnected = False
     _serverThread = None
+    _threadAddress = None
     _list_users = { }
 
 
@@ -126,6 +128,7 @@ class client :
                 sock_thread = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 thread_address = (free_server, free_port)
                 sock_thread.connect(thread_address)  
+                client._threadAddress = thread_address
                 client._connected_user = user
                 client._isConnected = True
                 print('CONNECT OK')
@@ -277,13 +280,16 @@ class client :
 
             if respuesta[0] == "0":
                 print('LIST_USERS OK')
-                for i in range(1):
+                for i in range(int(numero_de_conectados)):
                     usuario_conectado = sock.recv(1024).decode("utf-8")
                     print("\t" + usuario_conectado + "\n")
                     usuario_conectado_cleaned = re.sub(r'[^\w.\s]', '', usuario_conectado)
                     # Here, [^\w.\s] means any character that is not alphanumeric, a dot, or whitespace
-                    print(usuario_conectado_cleaned.split(" "))
-                    #client._list_users.update({ : usuario_conectado[:-1] })
+                    user_info = usuario_conectado_cleaned.split(" ")
+                    if len(user_info) >= 2:
+                        client._list_users[user_info[0]] = [user_info[1], user_info[2]]
+                        print("Added user:", user_info[0], "with info:", [user_info[1], user_info[2]])
+                    
                 print(client._list_users)
 
             elif respuesta[0] == "1":
@@ -340,35 +346,37 @@ class client :
             return client.RC.ERROR
 
     @staticmethod
-    def  getfile(user,  remote_FileName,  local_FileName) :
-        print("User " + user + " wants to download file " + remote_FileName + " to " + local_FileName)
+    def getfile(user, remote_FileName, local_FileName):
+        print("User " + client._connected_user + " wants to download file " + remote_FileName + " to " + local_FileName)
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect(client._serverSock)
+            sock.connect(client._threadAddress)
             
-            message = "GET_FILE\0"
-            print('Sending message: ' + message)
+            message = "GET_FILE\0" + user + "\0" + remote_FileName + "\0" + local_FileName + "\0"
+            print('Sending message:', message)
             sock.sendall(message.encode())
-            print('Sending user: ' + user)
-            sock.sendall(user.encode() + "\0".encode())
-            print('Sending remote file name: ' + remote_FileName)
-            sock.sendall(remote_FileName.encode() + "\0".encode())
-            print('Sending local file name: ' + local_FileName)
-            sock.sendall(local_FileName.encode() + "\0".encode())
             
             respuesta = sock.recv(1024).decode("utf-8")
-            print('Received message: ' + respuesta)
-            sock.close()  # Cierra el socket después de usarlo
-
+            print('Received message:', respuesta)
+            
+            if respuesta[0] == "0":
+                print('GET_FILE OK')
+            elif respuesta[0] == "1":
+                print('GET_FILE FAIL, USER DOES NOT EXIST')
+            elif respuesta[0] == "2":
+                print('GET_FILE FAIL, FILE NOT FOUND')
+            else:
+                print('GET_FILE FAIL')
+            
             return client.RC.OK
-        
+            
         except Exception as e:
             print("Exception getting the file:", str(e))
             return client.RC.ERROR
         
         finally:
             sock.close()
-    
+
     
     @staticmethod
     def handle_server_connection(user, server_sock, free_server, free_port):
@@ -378,20 +386,41 @@ class client :
                 connection, client_address = server_sock.accept()
                 print('Connection accepted from:', client_address)
                 message = connection.recv(1024).decode("utf-8")
-                if message == "GET_FILE\0":
+                print('Received message:', message)
+                if message.startswith("GET_FILE\0"):
                     print("Received GET FILE request.")
-                    # Aquí puedes proceder con la funcionalidad relacionada con la solicitud de GET FILE
-                else:
-                    print("Received unexpected message:", message)
-                
+                    parts = message.split("\0")
+                    user = parts[1]
+                    remote_file_name = parts[2]
+                    local_file_name = parts[3]
+                    print('User:', user)
+                    print('Remote File Name:', remote_file_name)
+                    print('Local File Name:', local_file_name)
+                    
+                    pathFile = '../usuarios/' + user + '/' + remote_file_name + '.txt'
+                    pathFileLocal = '../usuarios/' + client._connected_user + '/' + local_file_name + '.txt'
+
+                    # Check if the remote file exists and is accessible
+                    if os.path.exists(pathFile):
+                        # Read the content of the remote file
+                        with open(pathFile, 'rb') as remote_file:
+                            file_content = remote_file.read()
+
+                        # Send code 0 followed by the file content to indicate that the file transfer is starting
+                        connection.sendall(('0\0' + file_content.decode("utf-8") + '\0').encode())
+
+                        # Open the local file for writing
+                        with open(pathFileLocal, 'wb') as local_file:
+                            # Write the content of the remote file to the local file
+                            local_file.write(file_content)
+                        
+                        print('File transfer complete.')
+                    else:
+                        # Send code 2 to indicate that the remote file does not exist
+                        connection.sendall(('2\0').encode())
         except Exception as e:
             print("Exception in server connection thread:", str(e))
-                
 
-                
-                 
-        except Exception as e:
-                print("Exception in server connection thread:", str(e))
 
 
 

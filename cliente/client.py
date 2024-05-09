@@ -48,7 +48,6 @@ class client :
             print('Sending message: ' + message)
             sock.sendall(message.encode())
             
-            # Llamar al método get_timestamp del servicio web
                     
             wsdl_url = 'http://localhost:5000/?wsdl'
             # Crear un cliente Zeep
@@ -412,7 +411,7 @@ class client :
                     print('Remote File Name:', remote_file_name)
                     print('Local File Name:', local_file_name)
                     
-                    pathFile = '../usuarios/' + user + '/' + remote_file_name + '.txt'
+                    pathFile = '../archivosCliente/' + remote_file_name + '.txt'
                     pathFileLocal = '../usuarios/' + client._connected_user + '/' + local_file_name + '.txt'
 
                     # Check if the remote file exists and is accessible

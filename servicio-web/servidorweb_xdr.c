@@ -6,15 +6,15 @@
 #include "servidorweb.h"
 
 bool_t
-xdr_convertir_request (XDR *xdrs, convertir_request *objp)
+xdr_terminal_rpc_1_argument (XDR *xdrs, terminal_rpc_1_argument *objp)
 {
-	register int32_t *buf;
-
-	 if (!xdr_long (xdrs, &objp->timestamp))
+	 if (!xdr_pointer (xdrs, (char **)&objp->user, sizeof (char), (xdrproc_t) xdr_char))
 		 return FALSE;
-	 if (!xdr_int (xdrs, &objp->operation_code))
+	 if (!xdr_int (xdrs, &objp->request))
 		 return FALSE;
-	 if (!xdr_string (xdrs, &objp->data, ~0))
+	 if (!xdr_pointer (xdrs, (char **)&objp->timestamp, sizeof (char), (xdrproc_t) xdr_char))
+		 return FALSE;
+	 if (!xdr_pointer (xdrs, (char **)&objp->filename, sizeof (char), (xdrproc_t) xdr_char))
 		 return FALSE;
 	return TRUE;
 }

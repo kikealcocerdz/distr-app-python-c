@@ -8,54 +8,44 @@
 
 #include <rpc/rpc.h>
 
+#include <pthread.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 
-struct convertir_request {
-	long timestamp;
-	int operation_code;
-	char *data;
+struct terminal_rpc_1_argument {
+	char *user;
+	int request;
+	char *timestamp;
+	char *filename;
 };
-typedef struct convertir_request convertir_request;
+typedef struct terminal_rpc_1_argument terminal_rpc_1_argument;
 
-#define STRING_PROG 0x20000001
-#define STRING_VER 1
+#define SERVIDOR_RPC 99
+#define SERVIDOR_RPCVER 1
 
 #if defined(__STDC__) || defined(__cplusplus)
-#define vocales 1
-extern  int * vocales_1(request *, CLIENT *);
-extern  int * vocales_1_svc(request *, struct svc_req *);
-#define first 2
-extern  char ** first_1(request *, CLIENT *);
-extern  char ** first_1_svc(request *, struct svc_req *);
-#define convertir 3
-extern  char ** convertir_1(convertir_request *, CLIENT *);
-extern  char ** convertir_1_svc(convertir_request *, struct svc_req *);
-extern int string_prog_1_freeresult (SVCXPRT *, xdrproc_t, caddr_t);
+#define terminal_rpc 1
+extern  enum clnt_stat terminal_rpc_1(char *, int , char* , char* , int *, CLIENT *);
+extern  bool_t terminal_rpc_1_svc(char *, int , char * , char *, int *, struct svc_req *);
+extern int servidor_rpc_1_freeresult (SVCXPRT *, xdrproc_t, caddr_t);
 
 #else /* K&R C */
-#define vocales 1
-extern  int * vocales_1();
-extern  int * vocales_1_svc();
-#define first 2
-extern  char ** first_1();
-extern  char ** first_1_svc();
-#define convertir 3
-extern  char ** convertir_1();
-extern  char ** convertir_1_svc();
-extern int string_prog_1_freeresult ();
+#define terminal_rpc 1
+extern  enum clnt_stat terminal_rpc_1();
+extern  bool_t terminal_rpc_1_svc();
+extern int servidor_rpc_1_freeresult ();
 #endif /* K&R C */
 
 /* the xdr functions */
 
 #if defined(__STDC__) || defined(__cplusplus)
-extern  bool_t xdr_convertir_request (XDR *, convertir_request*);
+extern  bool_t xdr_terminal_rpc_1_argument (XDR *, terminal_rpc_1_argument*);
 
 #else /* K&R C */
-extern bool_t xdr_convertir_request ();
+extern bool_t xdr_terminal_rpc_1_argument ();
 
 #endif /* K&R C */
 

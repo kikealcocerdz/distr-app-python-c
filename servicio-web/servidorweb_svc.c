@@ -16,39 +16,34 @@
 #define SIG_PF void(*)(int)
 #endif
 
+int
+_terminal_rpc_1 (terminal_rpc_1_argument *argp, void *result, struct svc_req *rqstp)
+{
+	return (terminal_rpc_1_svc(argp->user, argp->request, argp->timestamp, argp->filename, result, rqstp));
+}
+
 static void
-string_prog_1(struct svc_req *rqstp, register SVCXPRT *transp)
+servidor_rpc_1(struct svc_req *rqstp, register SVCXPRT *transp)
 {
 	union {
-		request vocales_1_arg;
-		request first_1_arg;
-		convertir_request convertir_1_arg;
+		terminal_rpc_1_argument terminal_rpc_1_arg;
 	} argument;
-	char *result;
+	union {
+		int terminal_rpc_1_res;
+	} result;
+	bool_t retval;
 	xdrproc_t _xdr_argument, _xdr_result;
-	char *(*local)(char *, struct svc_req *);
+	bool_t (*local)(char *, void *, struct svc_req *);
 
 	switch (rqstp->rq_proc) {
 	case NULLPROC:
 		(void) svc_sendreply (transp, (xdrproc_t) xdr_void, (char *)NULL);
 		return;
 
-	case vocales:
-		_xdr_argument = (xdrproc_t) xdr_request;
+	case terminal_rpc:
+		_xdr_argument = (xdrproc_t) xdr_terminal_rpc_1_argument;
 		_xdr_result = (xdrproc_t) xdr_int;
-		local = (char *(*)(char *, struct svc_req *)) vocales_1_svc;
-		break;
-
-	case first:
-		_xdr_argument = (xdrproc_t) xdr_request;
-		_xdr_result = (xdrproc_t) xdr_wrapstring;
-		local = (char *(*)(char *, struct svc_req *)) first_1_svc;
-		break;
-
-	case convertir:
-		_xdr_argument = (xdrproc_t) xdr_convertir_request;
-		_xdr_result = (xdrproc_t) xdr_wrapstring;
-		local = (char *(*)(char *, struct svc_req *)) convertir_1_svc;
+		local = (bool_t (*) (char *, void *,  struct svc_req *))_terminal_rpc_1;
 		break;
 
 	default:
@@ -60,14 +55,17 @@ string_prog_1(struct svc_req *rqstp, register SVCXPRT *transp)
 		svcerr_decode (transp);
 		return;
 	}
-	result = (*local)((char *)&argument, rqstp);
-	if (result != NULL && !svc_sendreply(transp, (xdrproc_t) _xdr_result, result)) {
+	retval = (bool_t) (*local)((char *)&argument, (void *)&result, rqstp);
+	if (retval > 0 && !svc_sendreply(transp, (xdrproc_t) _xdr_result, (char *)&result)) {
 		svcerr_systemerr (transp);
 	}
 	if (!svc_freeargs (transp, (xdrproc_t) _xdr_argument, (caddr_t) &argument)) {
 		fprintf (stderr, "%s", "unable to free arguments");
 		exit (1);
 	}
+	if (!servidor_rpc_1_freeresult (transp, _xdr_result, (caddr_t) &result))
+		fprintf (stderr, "%s", "unable to free results");
+
 	return;
 }
 
@@ -76,15 +74,15 @@ main (int argc, char **argv)
 {
 	register SVCXPRT *transp;
 
-	pmap_unset (STRING_PROG, STRING_VER);
+	pmap_unset (SERVIDOR_RPC, SERVIDOR_RPCVER);
 
 	transp = svcudp_create(RPC_ANYSOCK);
 	if (transp == NULL) {
 		fprintf (stderr, "%s", "cannot create udp service.");
 		exit(1);
 	}
-	if (!svc_register(transp, STRING_PROG, STRING_VER, string_prog_1, IPPROTO_UDP)) {
-		fprintf (stderr, "%s", "unable to register (STRING_PROG, STRING_VER, udp).");
+	if (!svc_register(transp, SERVIDOR_RPC, SERVIDOR_RPCVER, servidor_rpc_1, IPPROTO_UDP)) {
+		fprintf (stderr, "%s", "unable to register (SERVIDOR_RPC, SERVIDOR_RPCVER, udp).");
 		exit(1);
 	}
 
@@ -93,8 +91,8 @@ main (int argc, char **argv)
 		fprintf (stderr, "%s", "cannot create tcp service.");
 		exit(1);
 	}
-	if (!svc_register(transp, STRING_PROG, STRING_VER, string_prog_1, IPPROTO_TCP)) {
-		fprintf (stderr, "%s", "unable to register (STRING_PROG, STRING_VER, tcp).");
+	if (!svc_register(transp, SERVIDOR_RPC, SERVIDOR_RPCVER, servidor_rpc_1, IPPROTO_TCP)) {
+		fprintf (stderr, "%s", "unable to register (SERVIDOR_RPC, SERVIDOR_RPCVER, tcp).");
 		exit(1);
 	}
 

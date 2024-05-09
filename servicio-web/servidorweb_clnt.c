@@ -9,47 +9,15 @@
 /* Default timeout can be changed using clnt_control() */
 static struct timeval TIMEOUT = { 25, 0 };
 
-int *
-vocales_1(request *argp, CLIENT *clnt)
+enum clnt_stat 
+terminal_rpc_1(char *user, int request, char *timestamp, char *filename, int *clnt_res,  CLIENT *clnt)
 {
-	static int clnt_res;
-
-	memset((char *)&clnt_res, 0, sizeof(clnt_res));
-	if (clnt_call (clnt, vocales,
-		(xdrproc_t) xdr_request, (caddr_t) argp,
-		(xdrproc_t) xdr_int, (caddr_t) &clnt_res,
-		TIMEOUT) != RPC_SUCCESS) {
-		return (NULL);
-	}
-	return (&clnt_res);
-}
-
-char **
-first_1(request *argp, CLIENT *clnt)
-{
-	static char *clnt_res;
-
-	memset((char *)&clnt_res, 0, sizeof(clnt_res));
-	if (clnt_call (clnt, first,
-		(xdrproc_t) xdr_request, (caddr_t) argp,
-		(xdrproc_t) xdr_wrapstring, (caddr_t) &clnt_res,
-		TIMEOUT) != RPC_SUCCESS) {
-		return (NULL);
-	}
-	return (&clnt_res);
-}
-
-char **
-convertir_1(convertir_request *argp, CLIENT *clnt)
-{
-	static char *clnt_res;
-
-	memset((char *)&clnt_res, 0, sizeof(clnt_res));
-	if (clnt_call (clnt, convertir,
-		(xdrproc_t) xdr_convertir_request, (caddr_t) argp,
-		(xdrproc_t) xdr_wrapstring, (caddr_t) &clnt_res,
-		TIMEOUT) != RPC_SUCCESS) {
-		return (NULL);
-	}
-	return (&clnt_res);
+	terminal_rpc_1_argument arg;
+	arg.user = user;
+	arg.request = request;
+	arg.timestamp = timestamp;
+	arg.filename = filename;
+	return (clnt_call (clnt, terminal_rpc, (xdrproc_t) xdr_terminal_rpc_1_argument, (caddr_t) &arg,
+		(xdrproc_t) xdr_int, (caddr_t) clnt_res,
+		TIMEOUT));
 }

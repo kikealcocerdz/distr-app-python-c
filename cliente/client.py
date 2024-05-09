@@ -53,7 +53,7 @@ class client :
             # Crear un cliente Zeep
             clientweb = Client(wsdl=wsdl_url)
             timestamp = clientweb.service.get_timestamp()
-            print('Timestamp:', timestamp)
+            sock.sendall(timestamp.encode() + "\0".encode())
 
 
             print('Sending user: ' + user)

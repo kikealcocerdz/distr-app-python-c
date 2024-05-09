@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include "comm.h"
+#include "../servicio-web/servidorweb.h"
 
 #define MAXSIZE 256
 
@@ -21,9 +22,13 @@ void tratar_mensaje(void *arg) {
     int ret2;
     int res2;
     char op='\0';
+    char fecha[256]="";
     char value1[256]="", operacion[256]="", res[256]="", res_clients[256]="", res_username[50]="", attr2[256]="", attr3[256]="", attr4[256]="";
     char V_Value2[256]="";
     int N_Value2, key;
+    CLIENT *clnt;
+	enum clnt_stat retval;
+    int result_1;
 
     pthread_mutex_lock(&mutex_mensaje);
 
@@ -54,8 +59,12 @@ void tratar_mensaje(void *arg) {
         op = '8';}
     
 
+    clnt = clnt_create("localhost", SERVIDOR_RPC, SERVIDOR_RPCVER, "tcp");
+    if (clnt == NULL) {
+        clnt_pcreateerror("Error al crear el cliente");
+        return;
+    }
     
-
     switch (op) {
         case '0':
             printf("REGISTER2\n");
@@ -63,7 +72,16 @@ void tratar_mensaje(void *arg) {
                 perror("error al recvMessage 2");
                 return;
             }
+            if (readLine(sc, (char *)&fecha, MAXSIZE) == -1) {
+                perror("error al recvMessage 2");
+                return;
+            }
             register_serv(attr2, res);
+            retval = terminal_rpc_1_svc(attr2, op, fecha, NULL, result_1, clnt);
+            if (retval != RPC_SUCCESS) {
+                clnt_perror(clnt, "Error al llamar al procedimiento remoto");
+                return;
+            }            
             printf("Usuario recibido: %s\n", attr2);
             break;
         case '1':
@@ -283,6 +301,7 @@ void tratar_mensaje(void *arg) {
                 break;
         }
         mensaje_no_copiado = false;
+        clnt_destroy(clnt);
         pthread_cond_signal(&cond_mensaje);
         pthread_mutex_unlock(&mutex_mensaje);
         close(sc); // Cerrar el socket después de enviar la respuesta

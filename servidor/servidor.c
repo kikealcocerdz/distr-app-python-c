@@ -94,9 +94,18 @@ void tratar_mensaje(void *arg) {
                 perror("error al recvMessage 2");
                 return;
             }
+            if (readLine(sc, (char *)&fecha, MAXSIZE) == -1) {
+                perror("error al recvMessage 2");
+                return;
+            }
             unregister_serv(attr2, res);
-            printf("Usuario recibido para borrar su registro: %s\n", attr2);
-            printf("Respuesta: %s\n", res);
+            retval = terminal_rpc_1(op, fecha, attr2, &result_1, clnt);
+            if (retval != RPC_SUCCESS) {
+                clnt_perror(clnt, "Error al llamar al procedimiento remoto");
+                return;
+            }         
+            clnt_destroy(clnt);   
+            
             ret = sendMessage(sc, res, strlen(res) + 1);
             if (ret == -1) {
                 pthread_mutex_unlock(&mutex_mensaje);
@@ -117,7 +126,17 @@ void tratar_mensaje(void *arg) {
                 perror("error al recvMessage 3");
                 return;
             }
+            if (readLine(sc, (char *)&fecha, MAXSIZE) == -1) {
+                perror("error al recvMessage 2");
+                return;
+            }
             connect_serv(attr2, attr3, attr4, res);
+            retval = terminal_rpc_1(op, fecha, attr2, &result_1, clnt);
+            if (retval != RPC_SUCCESS) {
+                clnt_perror(clnt, "Error al llamar al procedimiento remoto");
+                return;
+            }         
+            clnt_destroy(clnt);
             printf("Respuesta: %s\n", res);
             ret = sendMessage(sc, res, strlen(res) + 1);
             if (ret == -1) {
@@ -139,7 +158,18 @@ void tratar_mensaje(void *arg) {
                 perror("error al recvMessage 3");
                 return;
             }
+            if (readLine(sc, (char *)&fecha, MAXSIZE) == -1) {
+                perror("error al recvMessage 2");
+                return;
+            }
             publish_serv(attr2, attr3, attr4, res);
+            retval = terminal_rpc_1(op, fecha, attr2, &result_1, clnt);
+            if (retval != RPC_SUCCESS) {
+                clnt_perror(clnt, "Error al llamar al procedimiento remoto");
+                return;
+            }         
+            clnt_destroy(clnt);
+            
             printf("Fichero recibido para publicar: %s\n", attr2);
             printf("Respuesta: %s\n", res);
             ret = sendMessage(sc, res, strlen(res) + 1);
@@ -159,7 +189,18 @@ void tratar_mensaje(void *arg) {
                 perror("error al recvMessage 2");
                 return;
             }
+            if (readLine(sc, (char *)&fecha, MAXSIZE) == -1) {
+                perror("error al recvMessage 2");
+                return;
+            }
             delete_serv(attr2, attr3, res);
+            retval = terminal_rpc_1(op, fecha, attr2, &result_1, clnt);
+            if (retval != RPC_SUCCESS) {
+                clnt_perror(clnt, "Error al llamar al procedimiento remoto");
+                return;
+            }         
+            clnt_destroy(clnt);
+            
             printf("Respuesta: %s\n", res);
             ret = sendMessage(sc, res, strlen(res) + 1);
             if (ret == -1) {
@@ -174,7 +215,18 @@ void tratar_mensaje(void *arg) {
                 perror("error al recvMessage 2");
                 return;
             }
+            if (readLine(sc, (char *)&fecha, MAXSIZE) == -1) {
+                perror("error al recvMessage 2");
+                return;
+            }
             list_users_serv(attr2, res, &res2);
+            retval = terminal_rpc_1(op, fecha, attr2, &result_1, clnt);
+            if (retval != RPC_SUCCESS) {
+                clnt_perror(clnt, "Error al llamar al procedimiento remoto");
+                return;
+            }         
+            clnt_destroy(clnt);
+
             printf("Respuesta: %s\n", res);
             printf("Respuesta: %d\n", res2);
             ret = sendMessage(sc, res, strlen(res) + 1);
@@ -230,8 +282,19 @@ void tratar_mensaje(void *arg) {
                 perror("error al recvMessage 3");
                 return;
             }
+            if (readLine(sc, (char *)&fecha, MAXSIZE) == -1) {
+                perror("error al recvMessage 2");
+                return;
+            }
             printf("Username recibido: %s\n", attr2);
             list_content_serv(attr2, attr3, res, &res2, res_username);
+            retval = terminal_rpc_1(op, fecha, attr2, &result_1, clnt);
+            if (retval != RPC_SUCCESS) {
+                clnt_perror(clnt, "Error al llamar al procedimiento remoto");
+                return;
+            }         
+            clnt_destroy(clnt);
+
             printf("Respuesta: %s\n", res);
             printf("Respuesta: %d\n", res2);
             printf("Respuesta usuario: %s\n", res_username);
@@ -291,7 +354,17 @@ void tratar_mensaje(void *arg) {
                 perror("error al recvMessage 2");
                 return;
             }
+            if (readLine(sc, (char *)&fecha, MAXSIZE) == -1) {
+                perror("error al recvMessage 2");
+                return;
+            }
             disconnect_serv(attr2, res);
+            retval = terminal_rpc_1(op, fecha, attr2, &result_1, clnt);
+            if (retval != RPC_SUCCESS) {
+                clnt_perror(clnt, "Error al llamar al procedimiento remoto");
+                return;
+            }         
+            clnt_destroy(clnt);
             printf("Respuesta: %s\n", res);
             ret = sendMessage(sc, res, strlen(res) + 1);
             if (ret == -1) {

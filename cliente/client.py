@@ -48,12 +48,11 @@ class client :
             message = "REGISTER\0"
             print('Sending message: ' + message)
             sock.sendall(message.encode())
-                    
-            timestamp = client.clientweb.service.get_timestamp()
-            
+                                
             print('Sending user: ' + user)
             sock.sendall(user.encode() + "\0".encode())
 
+            timestamp = client.clientweb.service.get_timestamp()
             sock.sendall(timestamp.encode() + "\0".encode())
 
             respuesta = sock.recv(1024).decode()
@@ -88,6 +87,11 @@ class client :
             
             print('Sending user: ' + user)
             sock.sendall(user.encode() + "\0".encode())
+
+            
+            timestamp = client.clientweb.service.get_timestamp()
+            sock.sendall(timestamp.encode() + "\0".encode())
+
             respuesta = sock.recv(1024).decode("utf-8")
             if respuesta[0] == "0":
                 print('UNREGISTER OK')
@@ -133,6 +137,10 @@ class client :
             print('Sending server: ' + str(free_server))
             sock.sendall(str(free_server).encode() + b"\0")
 
+            
+            timestamp = client.clientweb.service.get_timestamp()
+            sock.sendall(timestamp.encode() + "\0".encode())
+
             respuesta = sock.recv(1024).decode("utf-8")
             print('Received message: ' + respuesta)
             
@@ -173,6 +181,11 @@ class client :
             
             print('Sending user: ' + user)
             sock.sendall(user.encode() + "\0".encode())
+
+              
+            timestamp = client.clientweb.service.get_timestamp()
+            sock.sendall(timestamp.encode() + "\0".encode())
+
             respuesta = sock.recv(1024).decode("utf-8")
             if respuesta[0] == "0":
                 client._serverSock.shutdown(socket.SHUT_RDWR)
@@ -213,6 +226,9 @@ class client :
             print('Sending description: ' + description)
             sock.sendall(description.encode() + "\0".encode())
 
+            timestamp = client.clientweb.service.get_timestamp()
+            sock.sendall(timestamp.encode() + "\0".encode())
+
             respuesta = sock.recv(1024).decode("utf-8")
             
             print('Received message: ' + respuesta[0])
@@ -248,6 +264,9 @@ class client :
             print('Sending user: ' + fileName)
             sock.sendall(fileName.encode() + "\0".encode())
             
+            timestamp = client.clientweb.service.get_timestamp()
+            sock.sendall(timestamp.encode() + "\0".encode())
+
             respuesta = sock.recv(1024).decode("utf-8")
             print('Received message: ' + respuesta  )
 
@@ -284,6 +303,9 @@ class client :
             print('Sending user: ' + client._connected_user)
             sock.sendall(client._connected_user.encode() + "\0".encode())
             
+            timestamp = client.clientweb.service.get_timestamp()
+            sock.sendall(timestamp.encode() + "\0".encode())
+
             respuesta = sock.recv(1024).decode("utf-8")
             numero_de_conectados = sock.recv(1024).decode("utf-8")
             numero_de_conectados = numero_de_conectados.strip('\x00')
@@ -332,6 +354,9 @@ class client :
             sock.sendall(user.encode() + "\0".encode())
 
             
+            timestamp = client.clientweb.service.get_timestamp()
+            sock.sendall(timestamp.encode() + "\0".encode())
+
             respuesta = sock.recv(1024).decode("utf-8")
             numero_de_archivos = sock.recv(1024).decode("utf-8")
             numero_de_archivos = numero_de_archivos.strip('\x00')
@@ -368,6 +393,9 @@ class client :
             print('Sending message:', message)
             sock.sendall(message.encode())
             
+            timestamp = client.clientweb.service.get_timestamp()
+            sock.sendall(timestamp.encode() + "\0".encode())
+
             respuesta = sock.recv(1024).decode("utf-8")
             print('Received message:', respuesta)
             

@@ -10,13 +10,12 @@
 static struct timeval TIMEOUT = { 25, 0 };
 
 enum clnt_stat 
-terminal_rpc_1(char *user, int request, char *timestamp, char *filename, int *clnt_res,  CLIENT *clnt)
+terminal_rpc_1(int request, char *timestamp, char *user, int *clnt_res,  CLIENT *clnt)
 {
 	terminal_rpc_1_argument arg;
-	arg.user = user;
 	arg.request = request;
 	arg.timestamp = timestamp;
-	arg.filename = filename;
+	arg.user = user;
 	return (clnt_call (clnt, terminal_rpc, (xdrproc_t) xdr_terminal_rpc_1_argument, (caddr_t) &arg,
 		(xdrproc_t) xdr_int, (caddr_t) clnt_res,
 		TIMEOUT));

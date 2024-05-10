@@ -47,19 +47,12 @@ class client :
             message = "REGISTER\0"
             print('Sending message: ' + message)
             sock.sendall(message.encode())
-            
                     
-            wsdl_url = 'http://localhost:5000/?wsdl'
-            # Crear un cliente Zeep
-            clientweb = Client(wsdl=wsdl_url)
-            timestamp = clientweb.service.get_timestamp()
+            timestamp = client.clientweb.service.get_timestamp()
             
-
-
             print('Sending user: ' + user)
             sock.sendall(user.encode() + "\0".encode())
 
-            print(timestamp)
             sock.sendall(timestamp.encode() + "\0".encode())
 
             respuesta = sock.recv(1024).decode()

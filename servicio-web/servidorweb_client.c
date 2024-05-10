@@ -13,10 +13,9 @@ servidor_rpc_1(char *host)
 	CLIENT *clnt;
 	enum clnt_stat retval_1;
 	int result_1;
-	char *terminal_rpc_1_user;
 	int terminal_rpc_1_request;
 	char *terminal_rpc_1_timestamp;
-	char *terminal_rpc_1_filename;
+	char *terminal_rpc_1_user;
 
 #ifndef	DEBUG
 	clnt = clnt_create (host, SERVIDOR_RPC, SERVIDOR_RPCVER, "udp");
@@ -26,7 +25,7 @@ servidor_rpc_1(char *host)
 	}
 #endif	/* DEBUG */
 
-	retval_1 = terminal_rpc_1(terminal_rpc_1_user, terminal_rpc_1_request, terminal_rpc_1_timestamp, terminal_rpc_1_filename, &result_1, clnt);
+	retval_1 = terminal_rpc_1(terminal_rpc_1_request, terminal_rpc_1_timestamp, terminal_rpc_1_user, &result_1, clnt);
 	if (retval_1 != RPC_SUCCESS) {
 		clnt_perror (clnt, "call failed");
 	}

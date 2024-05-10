@@ -29,6 +29,7 @@ void tratar_mensaje(void *arg) {
     CLIENT *clnt;
 	enum clnt_stat retval;
     int result_1;
+    char *host = "localhost";
 
     pthread_mutex_lock(&mutex_mensaje);
 
@@ -59,7 +60,7 @@ void tratar_mensaje(void *arg) {
         op = '8';}
     
 
-    clnt = clnt_create("localhost", SERVIDOR_RPC, SERVIDOR_RPCVER, "tcp");
+    clnt = clnt_create(host, SERVIDOR_RPC, SERVIDOR_RPCVER, "tcp");
     if (clnt == NULL) {
         clnt_pcreateerror("Error al crear el cliente");
         return;
@@ -78,12 +79,13 @@ void tratar_mensaje(void *arg) {
             }
             printf("fechilla %s user %s\n", fecha, attr2);
             register_serv(attr2, res);
-            retval = terminal_rpc_1(*attr2, op, *fecha, NULL, result_1, clnt);
+            retval = terminal_rpc_1(op, fecha, attr2, &result_1, clnt);
             printf("estoy joya");
             if (retval != RPC_SUCCESS) {
                 clnt_perror(clnt, "Error al llamar al procedimiento remoto");
                 return;
-            }            
+            }         
+            clnt_destroy(clnt);   
             printf("Usuario recibido: %s\n", attr2);
             break;
         case '1':
@@ -303,7 +305,6 @@ void tratar_mensaje(void *arg) {
                 break;
         }
         mensaje_no_copiado = false;
-        clnt_destroy(clnt);
         pthread_cond_signal(&cond_mensaje);
         pthread_mutex_unlock(&mutex_mensaje);
         close(sc); // Cerrar el socket después de enviar la respuesta

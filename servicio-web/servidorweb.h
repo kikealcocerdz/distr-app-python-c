@@ -16,10 +16,9 @@ extern "C" {
 
 
 struct terminal_rpc_1_argument {
-	char *user;
 	int request;
 	char *timestamp;
-	char *filename;
+	char *user;
 };
 typedef struct terminal_rpc_1_argument terminal_rpc_1_argument;
 
@@ -28,8 +27,8 @@ typedef struct terminal_rpc_1_argument terminal_rpc_1_argument;
 
 #if defined(__STDC__) || defined(__cplusplus)
 #define terminal_rpc 1
-extern  enum clnt_stat terminal_rpc_1(char *, int , char *, char *, int *, CLIENT *);
-extern  bool_t terminal_rpc_1_svc(char *, int , char *, char *, int *, struct svc_req *);
+extern  enum clnt_stat terminal_rpc_1(int , char *, char *, int *, CLIENT *);
+extern  bool_t terminal_rpc_1_svc(int , char *, char *, int *, struct svc_req *);
 extern int servidor_rpc_1_freeresult (SVCXPRT *, xdrproc_t, caddr_t);
 
 #else /* K&R C */

@@ -8,56 +8,28 @@
 #include <stdbool.h>
 
 bool_t
-terminal_rpc_1_svc(char *user, int request, char *timestamp, char *filename, int *result,  struct svc_req *rqstp)
+terminal_rpc_1_svc(int request, char *timestamp, char *user, int *result,  struct svc_req *rqstp)
 {
-	bool_t retval;
+  bool_t retval;
 
-	switch(request){
-		case '0':
-			printf("llegamos aquí joya\n");
-			printf("%s REGISTER %s\n", user, &timestamp);
-			break;
-		/*
-		case '1':
-			printf("%s UNREGISTER %s\n", &user, &timestamp);
-			break;
-		case '2':
-			printf("%s CONNECT %s\n", &user, &timestamp);
-			break;
-		case '3':
-			printf("%s PUBLISH %s %s\n", &user, &filename, &timestamp);
-			break;
-		case '4':
-			printf("%s DELETE %s %s\n", &user, &filename, &timestamp);
-			break;	
-		case '5':
-			printf("%s LIST_USERS %s\n", &user, &timestamp);
-			break;
-		case '6':
-			printf("%s LIST_CONTENT %s\n", &user, &timestamp);
-			break;
-		case '7':
-			printf("%s DISCONNECT %s %s\n", &user, &filename, &timestamp);
-			break;
-			*/
-		default:
-			printf("Invalid request\n");
-			break;
-	}
-
-	retval = true;
-
-	return retval;
+  switch(request){
+    case '0':
+      printf("llegamos aquí joya\n");
+      printf("%s REGISTER %s\n", user, timestamp);
+      break;
+  }
+	retval = TRUE;
+  return retval;
 }
 
 int
 servidor_rpc_1_freeresult (SVCXPRT *transp, xdrproc_t xdr_result, caddr_t result)
 {
-	xdr_free (xdr_result, result);
+  xdr_free (xdr_result, result);
 
-	/*
-	 * Insert additional freeing code here, if needed
-	 */
+  /*
+   * Insert additional freeing code here, if needed
+   */
 
-	return 1;
+  return 1;
 }

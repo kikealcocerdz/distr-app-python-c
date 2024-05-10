@@ -19,7 +19,7 @@
 int
 _terminal_rpc_1 (terminal_rpc_1_argument *argp, void *result, struct svc_req *rqstp)
 {
-	return (terminal_rpc_1_svc(argp->user, argp->request, argp->timestamp, argp->filename, result, rqstp));
+	return (terminal_rpc_1_svc(argp->request, argp->timestamp, argp->user, result, rqstp));
 }
 
 static void

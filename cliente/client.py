@@ -121,7 +121,7 @@ class client :
             print('Free port: ' + str(free_port))
             client._serverSock = server_sock
             # Start a new thread to handle server connection
-            client._serverThread = threading.Thread(target=client.handle_server_connection, args=(user, client._serverSock, free_server, free_port))
+            client._serverThread = threading.Thread(target=client.handle_server_connection, args=(user, client._serverSock, free_server, free_port, client._fileDirectory))
             client._serverThread.start()
 
             message = "CONNECT\0"
@@ -419,9 +419,9 @@ class client :
 
     
     @staticmethod
-    def handle_server_connection(user, server_sock, free_server, free_port):
+    def handle_server_connection(user, server_sock, free_server, free_port, file_directory):
         try:
-            print('Server connection thread started on port:', free_port, user, free_server)
+            print('Server connection thread started on port:', free_port, user, free_server, file_directory)
             while True:
                 connection, client_address = server_sock.accept()
                 print('Connection accepted from:', client_address)
@@ -436,8 +436,9 @@ class client :
                     print('User:', user)
                     print('Remote File Name:', remote_file_name)
                     print('Local File Name:', local_file_name)
-                    
-                    pathFile = client._fileDirectory + remote_file_name + '.txt'
+                    print('File Directory:', file_directory)
+                    pathFile = file_directory + remote_file_name + '.txt'
+                    print('Path File:', pathFile)
                     pathFileLocal = '../usuarios/' + client._connected_user + '/' + local_file_name + '.txt'
 
                     # Check if the remote file exists and is accessible

@@ -13,10 +13,10 @@ servidor_rpc_1(char *host)
 	CLIENT *clnt;
 	enum clnt_stat retval_1;
 	int result_1;
-	char terminal_rpc_1_user;
+	char *terminal_rpc_1_user;
 	int terminal_rpc_1_request;
-	char terminal_rpc_1_timestamp;
-	char terminal_rpc_1_filename;
+	char *terminal_rpc_1_timestamp;
+	char *terminal_rpc_1_filename;
 
 #ifndef	DEBUG
 	clnt = clnt_create (host, SERVIDOR_RPC, SERVIDOR_RPCVER, "udp");

@@ -8,14 +8,16 @@
 #include <stdbool.h>
 
 bool_t
-terminal_rpc_1_svc(char user, int request, char timestamp, char filename, int *result,  struct svc_req *rqstp)
+terminal_rpc_1_svc(char *user, int request, char *timestamp, char *filename, int *result,  struct svc_req *rqstp)
 {
 	bool_t retval;
 
 	switch(request){
 		case '0':
-			printf("%s REGISTER %s\n", &user, &timestamp);
+			printf("llegamos aquí joya\n");
+			printf("%s REGISTER %s\n", user, &timestamp);
 			break;
+		/*
 		case '1':
 			printf("%s UNREGISTER %s\n", &user, &timestamp);
 			break;
@@ -37,12 +39,14 @@ terminal_rpc_1_svc(char user, int request, char timestamp, char filename, int *r
 		case '7':
 			printf("%s DISCONNECT %s %s\n", &user, &filename, &timestamp);
 			break;
+			*/
 		default:
 			printf("Invalid request\n");
 			break;
 	}
 
 	retval = true;
+
 	return retval;
 }
 

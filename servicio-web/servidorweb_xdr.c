@@ -8,13 +8,13 @@
 bool_t
 xdr_terminal_rpc_1_argument (XDR *xdrs, terminal_rpc_1_argument *objp)
 {
-	 if (!xdr_char (xdrs, &objp->user))
+	 if (!xdr_string (xdrs, &objp->user, ~0))
 		 return FALSE;
 	 if (!xdr_int (xdrs, &objp->request))
 		 return FALSE;
-	 if (!xdr_char (xdrs, &objp->timestamp))
+	 if (!xdr_string (xdrs, &objp->timestamp, ~0))
 		 return FALSE;
-	 if (!xdr_char (xdrs, &objp->filename))
+	 if (!xdr_string (xdrs, &objp->filename, ~0))
 		 return FALSE;
 	return TRUE;
 }

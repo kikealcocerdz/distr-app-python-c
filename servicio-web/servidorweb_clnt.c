@@ -10,7 +10,7 @@
 static struct timeval TIMEOUT = { 25, 0 };
 
 enum clnt_stat 
-terminal_rpc_1(char user, int request, char timestamp, char filename, int *clnt_res,  CLIENT *clnt)
+terminal_rpc_1(char *user, int request, char *timestamp, char *filename, int *clnt_res,  CLIENT *clnt)
 {
 	terminal_rpc_1_argument arg;
 	arg.user = user;

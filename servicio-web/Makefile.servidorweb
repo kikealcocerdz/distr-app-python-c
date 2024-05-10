@@ -21,10 +21,8 @@ OBJECTS_SVC = $(SOURCES_SVC.c:%.c=%.o) $(TARGETS_SVC.c:%.c=%.o)
 # Compiler flags 
 
 CPPFLAGS += -D_REENTRANT
-
-CFLAGS += -g -I/usr/include/tirpc
-LDLIBS += -lnsl -lpthread -ldl -ltirpc
-
+CFLAGS += -g 
+LDLIBS += -lnsl -lpthread 
  RPCGENFLAGS = 
 
 # Targets 
@@ -45,5 +43,5 @@ $(SERVER) : $(OBJECTS_SVC)
 	$(LINK.c) -o $(SERVER) $(OBJECTS_SVC) $(LDLIBS)
 
  clean:
-	 $(RM) core  $(OBJECTS_CLNT) $(OBJECTS_SVC) $(CLIENT) $(SERVER)
+	 $(RM) core $(TARGETS) $(OBJECTS_CLNT) $(OBJECTS_SVC) $(CLIENT) $(SERVER)
 

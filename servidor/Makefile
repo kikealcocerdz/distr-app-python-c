@@ -1,18 +1,13 @@
-.PHONY: all clean run-servidor
+.PHONY: all clean run cliente servidor
 
-CFLAGS := -g -I/usr/include/tirpc
-LDFLAGS := -L. -lnsl -lpthread -ldl -ltirpc
+
+CFLAGS += -g -I/usr/include/tirpc
+LDLIBS += -lnsl -lpthread -ldl -ltirpc
 
 all: servidor
 
-servidor: servidor.o servidorweb_server.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-
-servidor.o: servidor.c
-	$(CC) $(CFLAGS) -c $<
-
-servidorweb_server.o: servidorweb_server.c
-	$(CC) $(CFLAGS) -c $<
+servidor: clavesservidor.c servidor.c comm.c
+	$(CC) $(CFLAGS) -o servidor clavesservidor.c servidor.c comm.c $(LDLIBS)
 
 clean:
-	rm -f servidor servidor.o servidorweb_server.o
+	rm -f servidor

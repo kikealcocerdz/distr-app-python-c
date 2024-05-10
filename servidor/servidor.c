@@ -76,8 +76,9 @@ void tratar_mensaje(void *arg) {
                 perror("error al recvMessage 2");
                 return;
             }
+            
             register_serv(attr2, res);
-            retval = terminal_rpc_1_svc(attr2, op, fecha, NULL, result_1, clnt);
+            retval = terminal_rpc_1(*attr2, op, *fecha, NULL, result_1, clnt);
             if (retval != RPC_SUCCESS) {
                 clnt_perror(clnt, "Error al llamar al procedimiento remoto");
                 return;

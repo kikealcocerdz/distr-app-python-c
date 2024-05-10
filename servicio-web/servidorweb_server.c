@@ -14,11 +14,31 @@ terminal_rpc_1_svc(int request, char *timestamp, char *user, int *result,  struc
 
   switch(request){
     case '0':
-      printf("llegamos aquí joya\n");
       printf("%s REGISTER %s\n", user, timestamp);
       break;
+    case '1':
+      printf("%s UNREGISTER %s\n", user, timestamp);
+      break;
+    case '2':
+      printf("%s CONNECT %s\n", user, timestamp);
+      break;
+    case '3':
+      printf("%s PUBLISH %s\n", user, timestamp);
+      break;
+    case '4':
+      printf("%s DELETE %s\n", user, timestamp);
+      break;  
+    case '5':
+      printf("%s LIST_USERS %s\n", user, timestamp);
+      break;
+    case '6':
+      printf("%s LIST_CONTENT %s\n", user, timestamp);
+      break;
+    case '7':
+      printf("%s DISCONNECT %s\n", user, timestamp);
+      break;
   }
-	retval = TRUE;
+  retval = TRUE;
   return retval;
 }
 

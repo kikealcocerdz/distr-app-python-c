@@ -255,16 +255,16 @@ void tratar_mensaje(void *arg) {
             if ((dir = opendir(ruta)) != NULL) {
                 while ((entry = readdir(dir)) != NULL && fileCount < res2) {
                     int ret_cliente;
-                    char res_cliente[512];
+                    char res_cliente[256];
                     if (entry->d_type == DT_REG) { // Solo procesa archivos regulares
-                        char file_path[512];
+                        char file_path[60];
                         sprintf(file_path, "%s/%s", ruta, entry->d_name);
                         FILE *fp = fopen(file_path, "r");
                         if (fp != NULL) {
                             char description[256];
                             fgets(description, sizeof(description), fp); // Lee el contenido del archivo
                             // Concatenar el nombre del archivo y su contenido en una sola cadena
-                            sprintf(res_cliente, "%s  %s", entry->d_name, description);
+                            snprintf(res_cliente, sizeof(res_cliente), "%s  %s", entry->d_name, description);
                             // Enviar la cadena que contiene el nombre del archivo y su contenido
                             ret_cliente = sendMessage(sc, res_cliente, strlen(res_cliente) + 1);
                             if (ret_cliente == -1) {

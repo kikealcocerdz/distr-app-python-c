@@ -21,6 +21,7 @@ class client :
     # ****************** ATTRIBUTES ******************
     _server = None
     _port = -1
+    _fileDirectory = None
     _connected_user = None
     _serverSock = None
     _isConnected = False
@@ -408,7 +409,7 @@ class client :
                     print('Remote File Name:', remote_file_name)
                     print('Local File Name:', local_file_name)
                     
-                    pathFile = '../archivosCliente/' + remote_file_name + '.txt'
+                    pathFile = client._fileDirectory + remote_file_name + '.txt'
                     pathFileLocal = '../usuarios/' + client._connected_user + '/' + local_file_name + '.txt'
 
                     # Check if the remote file exists and is accessible
@@ -520,7 +521,7 @@ class client :
     # * @brief Prints program usage
     @staticmethod
     def usage() :
-        print("Usage: python3 client.py -s <server> -p <port>")
+        print("Usage: python3 client.py -s <server> -p <port> -f <filedirectory>")
 
 
     # *
@@ -530,10 +531,12 @@ class client :
         parser = argparse.ArgumentParser()
         parser.add_argument('-s', type=str, required=True, help='Server IP')
         parser.add_argument('-p', type=int, required=True, help='Server Port')
+        parser.add_argument('-f', type=str, required=True, help='File directory')
+
         args = parser.parse_args()
 
         if (args.s is None):
-            parser.error("Usage: python3 client.py -s <server> -p <port>")
+            parser.error("Usage: python3 client.py -s <server> -p <port> -f <filedirectory>")
             return False
 
         if ((args.p < 1024) or (args.p > 65535)):
@@ -542,6 +545,7 @@ class client :
         
         client._server = args.s
         client._port = args.p
+        client._fileDirectory = args.f
 
         return True
 

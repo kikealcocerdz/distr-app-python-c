@@ -28,6 +28,7 @@ class client :
     _serverThread = None
     _threadAddress = None
     _list_users = { }
+    waiting_thread = threading.Event()
 
     wsdl_url = 'http://localhost:5000/?wsdl'
     # Crear un cliente Zeep
@@ -117,12 +118,8 @@ class client :
             server_sock.bind(('localhost', 0))
             server_sock.listen(1)
             free_server, free_port = server_sock.getsockname()
-            print('Free server: ' + str(free_server))
-            print('Free port: ' + str(free_port))
             client._serverSock = server_sock
             # Start a new thread to handle server connection
-            client._serverThread = threading.Thread(target=client.handle_server_connection, args=(user, client._serverSock, free_server, free_port, client._fileDirectory))
-            client._serverThread.start()
 
             message = "CONNECT\0"
             print('Sending message: ' + message)
@@ -145,12 +142,12 @@ class client :
             print('Received message: ' + respuesta)
             
             if respuesta[0] == "0":
-                sock_thread = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                thread_address = (free_server, free_port)
-                sock_thread.connect(thread_address)  
-                client._threadAddress = thread_address
+                client._serverThread = threading.Thread(target=client.handle_server_connection, args=(user, client._serverSock, free_server, free_port, client._fileDirectory))
+                client._serverThread.start()
+                
                 client._connected_user = user
                 client._isConnected = True
+                
                 print('CONNECT OK')
 
             elif respuesta[0] == "1":
@@ -316,17 +313,21 @@ class client :
             if respuesta[0] == "0":
                 print('LIST_USERS OK')
                 client._list_users.clear()
-                for i in range(int(numero_de_conectados) + 1):
+                for i in range(int(numero_de_conectados)):
+                    print('i:', i)
                     usuario_conectado = sock.recv(1024).decode("utf-8")
                     print("\t" + usuario_conectado + "\n")
+
+                    # Enviamos una confirmación para no solapar los mensajes
+                    sock.sendall("OK\0".encode())
+
                     user_info = usuario_conectado.split(" ")
+                    print('User info:', user_info)
                     for i in range(len(user_info)):
                         user_info[i] = user_info[i].strip('\x00')
                         user_info[i] = user_info[i].strip('\n')
-
-                    print('User info:', user_info)
-                    if len(user_info) >= 2:
-                        client._list_users[user_info[0]] = [user_info[1], user_info[2]]
+                        print('User info:', user_info[i])
+                        client._list_users[user_info[0]] = (user_info[1], int(user_info[2]))
                     
                 print(client._list_users)
 
@@ -387,18 +388,28 @@ class client :
             print("Exception listing content:", str(e))
             return client.RC.ERROR
 
+    
     @staticmethod
     def getfile(user, remote_FileName, local_FileName):
         print("User " + client._connected_user + " wants to download file " + remote_FileName + " to " + local_FileName)
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             thread = client._list_users.get(user)
-            print('Thread:', thread)
-            sock.connect(client._threadAddress)
-            
-            message = "GET_FILE\0" + user + "\0" + remote_FileName + "\0" + local_FileName + "\0"
+            print('Thread Client:', thread)
+            sock.connect(thread)
+            message = "GET_FILE\0" 
             print('Sending message:', message)
             sock.sendall(message.encode())
+
+            print('Sending user:', user)
+            sock.sendall(user.encode() + "\0".encode())
+
+            print('Sending remote file name:', remote_FileName)
+            sock.sendall(remote_FileName.encode() + "\0".encode())
+
+            print('Sending local file name:', local_FileName)
+            sock.sendall(local_FileName.encode() + "\0".encode())
+
             
             timestamp = client.clientweb.service.get_timestamp()
             sock.sendall(timestamp.encode() + "\0".encode())
@@ -424,6 +435,7 @@ class client :
         finally:
             sock.close()
 
+
     
     @staticmethod
     def handle_server_connection(user, server_sock, free_server, free_port, file_directory):
@@ -432,14 +444,16 @@ class client :
             while True:
                 connection, client_address = server_sock.accept()
                 print('Connection accepted from:', client_address)
+                print("mi momento ha llegado")
+                
                 message = connection.recv(1024).decode("utf-8")
                 print('Received message:', message)
-                if message.startswith("GET_FILE\0"):
+                if message.startswith("GET_FILE"):
                     print("Received GET FILE request.")
                     parts = message.split("\0")
-                    user = parts[1]
-                    remote_file_name = parts[2]
-                    local_file_name = parts[3]
+                    user = connection.recv(1024).decode("utf-8")
+                    remote_file_name = connection.recv(1024).decode("utf-8")
+                    local_file_name = connection.recv(1024).decode("utf-8")
                     print('User:', user)
                     print('Remote File Name:', remote_file_name)
                     print('Local File Name:', local_file_name)

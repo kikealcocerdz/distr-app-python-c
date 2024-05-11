@@ -23,6 +23,7 @@ void tratar_mensaje(void *arg) {
     int res2;
     char op='\0';
     char fecha[256]="";
+    char recibido[256]="";
     char value1[256]="", operacion[256]="", res[256]="", res_clients[256]="", res_username[50]="", attr2[256]="", attr3[256]="", attr4[256]="";
     char V_Value2[256]="";
     int N_Value2, key;
@@ -240,6 +241,7 @@ void tratar_mensaje(void *arg) {
                 pthread_mutex_unlock(&mutex_mensaje);
                 return;
             }
+            sleep(1);
             ret2 = sendMessage(sc, res_clients, strlen(res_clients) + 1);
             if (ret == -1) {
                 pthread_mutex_unlock(&mutex_mensaje);
@@ -271,11 +273,15 @@ void tratar_mensaje(void *arg) {
                     if (ret_cliente == -1) {
                         fclose(fp);
                         return; // Error handling, maybe break the loop or handle accordingly
-                    }
+                    } 
                 }
+                if (readLine(sc, (char *)&recibido, MAXSIZE) == -1) {
+                    perror("error al recvMessage 2");
+                    return;
+                }   
+                printf("Respuesta recibida: %s\n", recibido);   
                 fclose(fp);
             }
-
             break;
         
         case '6':

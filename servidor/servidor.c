@@ -87,6 +87,11 @@ void tratar_mensaje(void *arg) {
             }         
             clnt_destroy(clnt);   
             printf("Usuario recibido: %s\n", attr2);
+            ret = sendMessage(sc, res, strlen(res) + 1);
+            if (ret == -1) {
+                pthread_mutex_unlock(&mutex_mensaje);
+                return;
+            }
             break;
         case '1':
             printf("UNREGISTER2\n");
@@ -229,17 +234,18 @@ void tratar_mensaje(void *arg) {
 
             printf("Respuesta: %s\n", res);
             printf("Respuesta: %d\n", res2);
+            sprintf(res_clients, "%d", res2);
             ret = sendMessage(sc, res, strlen(res) + 1);
             if (ret == -1) {
                 pthread_mutex_unlock(&mutex_mensaje);
                 return;
             }
-            sprintf(res_clients, "%d", res2);
-            ret2 = sendMessage(sc, res_clients, res2 + 1);
-            if (ret2 == -1) {
+            ret2 = sendMessage(sc, res_clients, strlen(res_clients) + 1);
+            if (ret == -1) {
                 pthread_mutex_unlock(&mutex_mensaje);
                 return;
             }
+
             for (int i = 0; i < res2; i++) {
                 int ret_cliente;
                 char res_cliente[256];

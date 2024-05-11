@@ -307,27 +307,32 @@ class client :
             sock.sendall(timestamp.encode() + "\0".encode())
 
             respuesta = sock.recv(1024).decode("utf-8")
-            numero_de_conectados = sock.recv(1024).decode("utf-8")
-            numero_de_conectados = numero_de_conectados.strip('\x00')
+            
+            numero_de_conectados = sock.recv(1024).decode("utf-8").strip('\x00')
 
             print('Received message  111: ' + respuesta)
+            print('Received number of connected users: ' + numero_de_conectados)
 
             if respuesta[0] == "0":
                 print('LIST_USERS OK')
-                for i in range(int(numero_de_conectados)):
+                client._list_users.clear()
+                for i in range(int(numero_de_conectados) + 1):
                     usuario_conectado = sock.recv(1024).decode("utf-8")
                     print("\t" + usuario_conectado + "\n")
-                    usuario_conectado_cleaned = re.sub(r'[^\w.\s]', '', usuario_conectado)
-                    # Here, [^\w.\s] means any character that is not alphanumeric, a dot, or whitespace
-                    user_info = usuario_conectado_cleaned.split(" ")
+                    user_info = usuario_conectado.split(" ")
+                    for i in range(len(user_info)):
+                        user_info[i] = user_info[i].strip('\x00')
+                        user_info[i] = user_info[i].strip('\n')
+
+                    print('User info:', user_info)
                     if len(user_info) >= 2:
                         client._list_users[user_info[0]] = [user_info[1], user_info[2]]
-                        print("Added user:", user_info[0], "with info:", [user_info[1], user_info[2]])
                     
                 print(client._list_users)
 
             elif respuesta[0] == "1":
                 print('LIST_USERS FAIL')
+                
             else:
                 print('LIST_USERS FAIL')
 
@@ -387,6 +392,8 @@ class client :
         print("User " + client._connected_user + " wants to download file " + remote_FileName + " to " + local_FileName)
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            thread = client._list_users.get(user)
+            print('Thread:', thread)
             sock.connect(client._threadAddress)
             
             message = "GET_FILE\0" + user + "\0" + remote_FileName + "\0" + local_FileName + "\0"

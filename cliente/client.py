@@ -402,6 +402,7 @@ class client :
             sock.sendall(message.encode())
 
             print('Sending user:', user)
+            sock.sendall(str(len(user)).encode() + "\0".encode())
             sock.sendall(user.encode() + "\0".encode())
 
             print('Sending remote file name:', remote_FileName)
@@ -409,10 +410,6 @@ class client :
 
             print('Sending local file name:', local_FileName)
             sock.sendall(local_FileName.encode() + "\0".encode())
-
-            
-            timestamp = client.clientweb.service.get_timestamp()
-            sock.sendall(timestamp.encode() + "\0".encode())
 
             respuesta = sock.recv(1024).decode("utf-8")
             print('Received message:', respuesta)
@@ -446,15 +443,14 @@ class client :
                 print('Connection accepted from:', client_address)
                 print("mi momento ha llegado")
                 
-                message = connection.recv(1024).decode("utf-8")
+                message = connection.recv(256).decode("utf-8")
                 print('Received message:', message)
                 if message.startswith("GET_FILE"):
                     print("Received GET FILE request.")
                     parts = message.split("\0")
-                    user = connection.recv(1024).decode("utf-8")
-                    remote_file_name = connection.recv(1024).decode("utf-8")
-                    local_file_name = connection.recv(1024).decode("utf-8")
-                    print('User:', user)
+                    user_length = connection.recv(50).decode("utf-8")
+                    user_received = connection.recv(int(user_length)).decode("utf-8")
+                    print('User:', user_received)
                     print('Remote File Name:', remote_file_name)
                     print('Local File Name:', local_file_name)
                     print('File Directory:', file_directory)

@@ -167,7 +167,9 @@ void tratar_mensaje(void *arg) {
                 return;
             }
             publish_serv(attr2, attr3, attr4, res);
-            retval = terminal_rpc_1(op, fecha, attr2, &result_1, clnt);
+            strcat(attr3, " ");
+            strcat(attr3, fecha);
+            retval = terminal_rpc_1(op, attr3, attr2, &result_1, clnt);
             if (retval != RPC_SUCCESS) {
                 clnt_perror(clnt, "Error al llamar al procedimiento remoto");
                 return;
@@ -198,7 +200,9 @@ void tratar_mensaje(void *arg) {
                 return;
             }
             delete_serv(attr2, attr3, res);
-            retval = terminal_rpc_1(op, fecha, attr2, &result_1, clnt);
+            strcat(attr3, " ");
+            strcat(attr3, fecha);
+            retval = terminal_rpc_1(op, attr3, attr2, &result_1, clnt);
             if (retval != RPC_SUCCESS) {
                 clnt_perror(clnt, "Error al llamar al procedimiento remoto");
                 return;

@@ -8,7 +8,7 @@ class TimestampService(ServiceBase):
     def get_timestamp(self):
         from datetime import datetime
         now = datetime.now()
-        timestamp_str = now.strftime('%Y-%m-%d %H:%M:%S')
+        timestamp_str = now.strftime('%d-%m-%Y %H:%M:%S')
         return timestamp_str
 
 # Crear la aplicación Spyne

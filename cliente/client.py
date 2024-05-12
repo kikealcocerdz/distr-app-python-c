@@ -401,9 +401,13 @@ class client :
             print('Sending message:', message)
             sock.sendall(message.encode())
 
-            print('Sending user:', user)
+            print('Sending user remote:', user)
             sock.sendall(str(len(user)).encode() + "\0".encode())
             sock.sendall(user.encode() + "\0".encode())
+
+            print('Sending user connected:', client._connected_user)
+            sock.sendall(client._connected_user.encode() + "\0".encode())
+
 
             print('Sending remote file name:', remote_FileName)
             sock.sendall(remote_FileName.encode() + "\0".encode())
@@ -412,7 +416,6 @@ class client :
             sock.sendall(local_FileName.encode() + "\0".encode())
 
             respuesta = sock.recv(1024).decode("utf-8")
-            print('Received message:', respuesta)
             
             if respuesta[0] == "0":
                 print('GET_FILE OK')
@@ -448,15 +451,21 @@ class client :
                 if message.startswith("GET_FILE"):
                     print("Received GET FILE request.")
                     parts = message.split("\0")
-                    user_length = connection.recv(50).decode("utf-8")
-                    user_received = connection.recv(int(user_length)).decode("utf-8")
-                    print('User:', user_received)
+
+                    user = parts[2]
+                    user_local = parts[3]
+                    remote_file_name = parts[4]
+                    local_file_name = parts[5]
+
+                    print('User:', user)
                     print('Remote File Name:', remote_file_name)
                     print('Local File Name:', local_file_name)
+                    print('User Local:', user_local)
                     print('File Directory:', file_directory)
-                    pathFile = file_directory + remote_file_name + '.txt'
+                    
+                    pathFile = file_directory + "/" + remote_file_name + '.txt'
                     print('Path File:', pathFile)
-                    pathFileLocal = '../usuarios/' + client._connected_user + '/' + local_file_name + '.txt'
+                    pathFileLocal = '../usuarios/' + user_local + '/' + local_file_name + '.txt'
 
                     # Check if the remote file exists and is accessible
                     if os.path.exists(pathFile):

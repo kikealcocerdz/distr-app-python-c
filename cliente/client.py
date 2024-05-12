@@ -42,19 +42,22 @@ class client :
     @staticmethod
     def register(user):
         try:
+            # Creamos el socket para conectarnos al servidor
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_address = (client._server, client._port)
             sock.connect(server_address)
             
+            # Envíamos el mensaje de registro
             message = "REGISTER\0"
             sock.sendall(message.encode())
                                 
             sock.sendall(user.encode() + "\0".encode())
 
+            # Obtenemos el timestamp del servidor web
             timestamp = client.clientweb.service.get_timestamp()
             sock.sendall(timestamp.encode() + "\0".encode())
 
-
+            # Recibimos la respuesta del servidor
             respuesta = sock.recv(16).decode()
 
             if respuesta[0] == "0":
@@ -85,14 +88,16 @@ class client :
                 sock.connect(server_address)
                 
                 message = "UNREGISTER\0"
+                # Enviamos el mensaje de baja
                 sock.sendall(message.encode())
                 
                 sock.sendall(user.encode() + "\0".encode())
 
-                
+                # Obtenemos el timestamp del servidor web
                 timestamp = client.clientweb.service.get_timestamp()
                 sock.sendall(timestamp.encode() + "\0".encode())
 
+                # Recibimos la respuesta del servidor
                 respuesta = sock.recv(16).decode("utf-8")
 
                 if respuesta[0] == "0":
@@ -112,22 +117,25 @@ class client :
     @staticmethod
     def connect(user):
         try:
+            # Creamos el socket para conectarnos al servidor
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_address = (client._server, client._port)
             sock.connect(server_address)
 
+            # Creamos un socket para el servidor del cliente y encontramos un puerto libre
             server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_sock.bind(('localhost', 0))
             server_sock.listen(1)
             free_server, free_port = server_sock.getsockname()
             client._serverSock = server_sock
-            # Start a new thread to handle server connection
-
+        
+            # Enviamos el mensaje de conexión
             message = "CONNECT\0"
             sock.sendall(message.encode())
 
             sock.sendall(user.encode() + b"\0")
 
+            # Enviamos el puerto y la dirección del servidor del cliente
             sock.sendall(str(free_port).encode() + b"\0")
 
             sock.sendall(str(free_server).encode() + b"\0")
@@ -139,9 +147,11 @@ class client :
             respuesta = sock.recv(1).decode("utf-8")
             
             if respuesta[0] == "0":
+                # Creamos un hilo para manejar la conexión con el servidor del cliente
                 client._serverThread = threading.Thread(target=client.handle_server_connection, args=(user, client._serverSock, free_server, free_port, client._fileDirectory))
                 client._serverThread.start()
                 
+                # Establecemos los atributos del cliente
                 client._connected_user = user
                 client._threadAddress = (free_server, free_port)
                 client._isConnected = True
@@ -164,17 +174,19 @@ class client :
     
     @staticmethod
     def  disconnect(user) :
-        print("Disconnecting user: " + user)
         try:
+            # Comprobamos que el usuario que se quiere desconectar es el mismo que el usuario conectado
             if user != client._connected_user:
                 print('DISCONNECT FAIL / NO ERES TÚ')
                 return client.RC.ERROR
             
             else:
+                # Creamos un socket para conectarnos al servidor
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 server_address = (client._server, client._port)
                 sock.connect(server_address)
                 
+                # Enviamos el mensaje de desconexión
                 message = "DISCONNECT\0"
                 sock.sendall(message.encode())
         
@@ -185,6 +197,7 @@ class client :
                 respuesta = sock.recv(1).decode("utf-8")
 
                 if respuesta[0] == "0":
+                    # Cerramos el socket del servidor del cliente y esperamos a que el hilo termine
                     print("Threads activos: ", threading.active_count())
                     sock_thread = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     sock_thread.connect(client._threadAddress)
@@ -227,6 +240,7 @@ class client :
             #Comprobamos si el archivo existe en el directorio pasado por el cliente
             if not os.path.exists(client._fileDirectory + "/" + fileName + '.txt'):
                 print('PUBLISH FAIL, FILE DOES NOT EXIST')
+                # Si no existe enviamos notfound, que el servidor interpretará como que el archivo no existe
                 sock.sendall("notfound".encode() + "\0".encode())
                 sock.sendall(description.encode() + "\0".encode())
                 timestamp = client.clientweb.service.get_timestamp()
@@ -240,7 +254,7 @@ class client :
             timestamp = client.clientweb.service.get_timestamp()
             sock.sendall(timestamp.encode() + "\0".encode())
 
-            respuesta = sock.recv(1024).decode("utf-8")
+            respuesta = sock.recv(1).decode("utf-8")
             
             print('Received message: ' + respuesta[0])
             if respuesta[0] == "0":
@@ -260,13 +274,14 @@ class client :
 
     @staticmethod
     def  delete(fileName) :
-        print("Deleting file: " + fileName)
         try:
+            # Creamos el socket para conectarnos al servidor
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_address = (client._server, client._port)
             sock.connect(server_address)
             
             message = "DELETE\0"
+            # Enviamos el mensaje de borrado
             sock.sendall(message.encode())
             sock.sendall(client._connected_user.encode() + "\0".encode())
             
@@ -275,7 +290,7 @@ class client :
             timestamp = client.clientweb.service.get_timestamp()
             sock.sendall(timestamp.encode() + "\0".encode())
 
-            respuesta = sock.recv(1024).decode("utf-8")
+            respuesta = sock.recv(1).decode("utf-8")
 
             if respuesta[0] == "0":
                 print('DELETE OK')
@@ -305,6 +320,7 @@ class client :
             message = "LIST_USERS\0"
             sock.sendall(message.encode())
 
+            # Si el usuario no está conectado, enviamos un mensaje vacío que el servidor interpretará como que no hay usuario conectado
             if client._connected_user is None:
                 sock.sendall("".encode() + "\0".encode())
             else:
@@ -313,17 +329,18 @@ class client :
             timestamp = client.clientweb.service.get_timestamp()
             sock.sendall(timestamp.encode() + "\0".encode())
 
-            respuesta = sock.recv(1024).decode("utf-8")
+            respuesta = sock.recv(1).decode("utf-8")
             
             sock.sendall("OK\0".encode())
 
-            numero_de_conectados = sock.recv(1024).decode("utf-8").strip('\x00')
+            numero_de_conectados = sock.recv(256).decode("utf-8").strip('\x00')
 
             if respuesta[0] == "0":
                 print('LIST_USERS OK')
                 client._list_users.clear()
+                # Iteramos sobre el número de usuarios conectados
                 for i in range(int(numero_de_conectados)):
-                    usuario_conectado = sock.recv(1024).decode("utf-8")
+                    usuario_conectado = sock.recv(256).decode("utf-8")
                     print("\t" + usuario_conectado)
 
                     # Enviamos una confirmación para no solapar los mensajes
@@ -331,6 +348,7 @@ class client :
 
                     user_info = usuario_conectado.split(" ")
                     for i in range(len(user_info)):
+                        # Eliminamos los caracteres nulos y saltos de línea
                         user_info[i] = user_info[i].strip('\x00')
                         user_info[i] = user_info[i].strip('\n')
                         client._list_users[user_info[0]] = (user_info[1], int(user_info[2]))
@@ -359,12 +377,9 @@ class client :
             sock.connect(server_address)
             
             message = "LIST_CONTENT\0"
-            print('Sending message: ' + message)
             sock.sendall(message.encode())
-            print('Sending connected user: ' + client._connected_user)
             sock.sendall(client._connected_user.encode() + "\0".encode())
             
-            print('Sending user to get files: ' + user)
             sock.sendall(user.encode() + "\0".encode())
 
             
@@ -375,15 +390,14 @@ class client :
             numero_de_archivos = sock.recv(1024).decode("utf-8")
             numero_de_archivos = numero_de_archivos.strip('\x00')
 
-            print('Received message: ' + respuesta)
-            print('Received number of files: ' + numero_de_archivos)
 
             if respuesta[0] == "0":
                 print('LIST_CONTENT OK')
                 for i in range(int(numero_de_archivos)):
                     archivo = sock.recv(1024).decode("utf-8")
-                    print("\t" + archivo, end='')  # Imprimir un tabulador seguido del nombre del archivo                    sys.stdout.flush()  # Forzar la salida inmediata
-                    print()  # Agregar un salto de línea después de cada archivo
+                    # Imprimir un tabulador seguido del nombre del archivo
+                    print("\t" + archivo, end='') 
+                    print()
 
             elif respuesta[0] == "1":
                 print('LIST_CONTENT FAIL, USER DOES NOT EXIST')

@@ -156,7 +156,7 @@ void publish_serv(char *username, char *fileName, char *description, char *res) 
     char foldername[50]; 
     char checkfile[100];
     sprintf(foldername, "../usuarios/%s", username);
-    sprintf(checkfile, "%s/%s.txt", foldername, fileName); // Full path to the file
+    sprintf(checkfile, "%s/%s.txt", foldername, fileName); 
 
     if (access(foldername, F_OK) != 0) {
         // Folder does not exist
@@ -187,19 +187,27 @@ void publish_serv(char *username, char *fileName, char *description, char *res) 
     }
 
     char filepath[256];
-    sprintf(filepath, "%s/%s.txt", foldername, fileName);
-    FILE *file = fopen(filepath, "w");
-    if (file == NULL) {
-        perror("Error al abrir el archivo\n");
+
+    if (strcmp(fileName, "notfound") == 0) { // Cambio aquí
         sprintf(res, "4");
         return;
     }
-    fprintf(file, "%s\n", description);
-    fclose(file);
+    else {
+        sprintf(filepath, "%s/%s.txt", foldername, fileName);
+        FILE *file = fopen(filepath, "w");
+        if (file == NULL) {
+            perror("Error al abrir el archivo\n");
+            sprintf(res, "4");
+            return;
+        }
+        fprintf(file, "%s\n", description);
+        fclose(file);
+    }
 
     sprintf(res, "0");
     return;
 }
+
 
 void delete_serv(char *username, char *fileName, char *res) {
 
@@ -252,11 +260,25 @@ void delete_serv(char *username, char *fileName, char *res) {
 void list_users_serv(char *username, char *res, int *res2) {
     char foldername[20]; 
 
+    // Comprobamos si el usuario es nulo
+    if (strcmp(username, "") == 0) {
+        sprintf(res, "2");
+        return;
+    }
+    
+    sprintf(foldername, "../usuarios/%s", username);
+    // Check if the folder exists
+    if (access(foldername, F_OK) != 0) {
+        // Folder does not exist
+        sprintf(res, "1");
+        return;
+    }
+    
     // Check if username is on conectados.txt
     FILE *conectadosFile = fopen("../usuarios/conectados.txt", "r");
     if (conectadosFile == NULL) {
         perror("Error al abrir conectados file\n");
-        sprintf(res, "3");
+        sprintf(res, "2");
         return;
     }
 

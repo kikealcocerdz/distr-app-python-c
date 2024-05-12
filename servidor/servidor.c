@@ -69,7 +69,7 @@ void tratar_mensaje(void *arg) {
     
     switch (op) {
         case '0':
-            printf("REGISTER2\n");
+            printf("REGISTER\n");
             if (readLine(sc, (char *)&attr2, MAXSIZE) == -1) {
                 perror("error al recvMessage 2");
                 return;
@@ -78,10 +78,8 @@ void tratar_mensaje(void *arg) {
                 perror("error al recvMessage 2");
                 return;
             }
-            printf("fechilla %s user %s\n", fecha, attr2);
             register_serv(attr2, res);
             retval = terminal_rpc_1(op, fecha, attr2, &result_1, clnt);
-            printf("estoy joya");
             if (retval != RPC_SUCCESS) {
                 clnt_perror(clnt, "Error al llamar al procedimiento remoto");
                 return;
@@ -95,7 +93,7 @@ void tratar_mensaje(void *arg) {
             }
             break;
         case '1':
-            printf("UNREGISTER2\n");
+            printf("UNREGISTER\n");
             if (readLine(sc, (char *)&attr2, MAXSIZE) == -1) {
                 perror("error al recvMessage 2");
                 return;
@@ -119,7 +117,7 @@ void tratar_mensaje(void *arg) {
             }
             break;
         case '2':
-            printf("CONNECT2\n");
+            printf("CONNECT\n");
             if (readLine(sc, (char *)&attr2, MAXSIZE) == -1) {
                 perror("error al recvMessage 2");
                 return;
@@ -151,7 +149,7 @@ void tratar_mensaje(void *arg) {
             }
             break;
         case '3':
-            printf("PUBLISH2\n");
+            printf("PUBLISH\n");
             if (readLine(sc, (char *)&attr2, MAXSIZE) == -1) {
                 perror("error al recvMessage 2");
                 return;
@@ -186,7 +184,7 @@ void tratar_mensaje(void *arg) {
             break;
             
         case '4':
-            printf("DELETING2\n");
+            printf("DELETING\n");
             if (readLine(sc, (char *)&attr2, MAXSIZE) == -1) {
                 perror("error al recvMessage 2");
                 return;
@@ -216,7 +214,7 @@ void tratar_mensaje(void *arg) {
             break;
             
         case '5':
-            printf("LIST_USERS2\n");
+            printf("LIST_USERS\n");
             if (readLine(sc, (char *)&attr2, MAXSIZE) == -1) {
                 perror("error al recvMessage 2");
                 return;
@@ -241,46 +239,51 @@ void tratar_mensaje(void *arg) {
                 pthread_mutex_unlock(&mutex_mensaje);
                 return;
             }
-            sleep(1);
+
+            if (readLine(sc, (char *)&recibido, MAXSIZE) == -1) {
+                perror("error al recvMessage 2");
+                return;
+            }
+
             ret2 = sendMessage(sc, res_clients, strlen(res_clients) + 1);
             if (ret == -1) {
                 pthread_mutex_unlock(&mutex_mensaje);
                 return;
             }
-
-            for (int i = 0; i < res2; i++) {
-                int ret_cliente;
-                char res_cliente[256];
-                FILE *fp = fopen("../usuarios/conectados.txt", "r");
-                if (fp == NULL) {
-                    perror("Error opening conectados file\n");
-                    return;
-                }
-                
-                // Skip lines until reaching the desired line
-                for (int j = 0; j < i; j++) {
-                    if (fgets(res_cliente, sizeof(res_cliente), fp) == NULL) {
-                        fclose(fp);
-                        return; // Error handling, maybe break the loop or handle accordingly
+            if (strcmp(res, "0") == 0){
+                for (int i = 0; i < res2; i++) {
+                    int ret_cliente;
+                    char res_cliente[256];
+                    FILE *fp = fopen("../usuarios/conectados.txt", "r");
+                    if (fp == NULL) {
+                        perror("Error opening conectados file\n");
+                        return;
                     }
+                    
+                    // Skip lines until reaching the desired line
+                    for (int j = 0; j < i; j++) {
+                        if (fgets(res_cliente, sizeof(res_cliente), fp) == NULL) {
+                            fclose(fp);
+                            return; // Error handling, maybe break the loop or handle accordingly
+                        }
+                    }
+                    
+                    // Read the line to be sent
+                    if (fgets(res_cliente, sizeof(res_cliente), fp) != NULL) {
+                        // Send the line
+                        printf("Respuesta: %s\n", res_cliente);
+                        ret_cliente = sendMessage(sc, res_cliente, strlen(res_cliente) + 1);
+                        if (ret_cliente == -1) {
+                            fclose(fp);
+                            return; // Error handling, maybe break the loop or handle accordingly
+                        } 
+                    }
+                    if (readLine(sc, (char *)&recibido, MAXSIZE) == -1) {
+                        perror("error al recvMessage 2");
+                        return;
+                    }     
+                    fclose(fp);
                 }
-                
-                // Read the line to be sent
-                if (fgets(res_cliente, sizeof(res_cliente), fp) != NULL) {
-                    // Send the line
-                    printf("Respuesta: %s\n", res_cliente);
-                    ret_cliente = sendMessage(sc, res_cliente, strlen(res_cliente) + 1);
-                    if (ret_cliente == -1) {
-                        fclose(fp);
-                        return; // Error handling, maybe break the loop or handle accordingly
-                    } 
-                }
-                if (readLine(sc, (char *)&recibido, MAXSIZE) == -1) {
-                    perror("error al recvMessage 2");
-                    return;
-                }   
-                printf("Respuesta recibida: %s\n", recibido);   
-                fclose(fp);
             }
             break;
         

@@ -29,7 +29,6 @@ class client :
     _serverThread = None
     _threadAddress = None
     _list_users = { }
-    waiting_thread = threading.Event()
 
     wsdl_url = 'http://localhost:5000/?wsdl'
     # Crear un cliente Zeep
@@ -46,28 +45,33 @@ class client :
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_address = (client._server, client._port)
             sock.connect(server_address)
+            if len(user) > 255:
+                print("REGISTER FAIL")
+                return client.RC.USER_ERROR
+            else:                
+                # Envíamos el mensaje de registro
+                message = "REGISTER\0"
+                sock.sendall(message.encode())
+                sock.sendall(user.encode() + "\0".encode())
+
+                # Obtenemos el timestamp del servidor web
+                timestamp = client.clientweb.service.get_timestamp()
+                sock.sendall(timestamp.encode() + "\0".encode())
+
+                # Recibimos la respuesta del servidor
+                respuesta = sock.recv(16).decode()
+
+                if respuesta[0] == "0":
+                    print('REGISTER OK')
+                elif respuesta[0] == "1":
+                    print('USERNAME IN USE')
+                elif respuesta[0] == "2":
+                    print('REGISTER FAIL')
+                else:
+                    print('REGISTER FAIL')
             
-            # Envíamos el mensaje de registro
-            message = "REGISTER\0"
-            sock.sendall(message.encode())
-                                
-            sock.sendall(user.encode() + "\0".encode())
-
-            # Obtenemos el timestamp del servidor web
-            timestamp = client.clientweb.service.get_timestamp()
-            sock.sendall(timestamp.encode() + "\0".encode())
-
-            # Recibimos la respuesta del servidor
-            respuesta = sock.recv(16).decode()
-
-            if respuesta[0] == "0":
-                print('REGISTER OK')
-            elif respuesta[0] == "1":
-                print('REGISTER IN USE')
-            elif respuesta[0] == "2":
-                print('REGISTER FAIL')
-            else:
-                print('REGISTER FAIL')
+            sock.close()  # Cierra el socket después de usarlo
+            return client.RC.OK
 
             
         except Exception as e:
@@ -105,11 +109,16 @@ class client :
                 elif respuesta[0] == "1":
                     print('USER DOES NOT EXIST')
                 elif respuesta[0] == "2":
-                    print('REGISTER FAIL')
+                    print('UNREGISTER FAIL')
                 else:
-                    print('REGISTER FAIL')
+                    print('UNREGISTER FAIL')
+
+                sock.close()  # Cierra el socket después de usarlo
+
             else:
                 print('UNREGISTER FAIL / NO ERES TÚ')
+            
+            return client.RC.OK
             
         except Exception as e:
             print("Exception during unregistration:", str(e))
@@ -148,25 +157,30 @@ class client :
             
             if respuesta[0] == "0":
                 # Creamos un hilo para manejar la conexión con el servidor del cliente
+                client._isConnected = True
                 client._serverThread = threading.Thread(target=client.handle_server_connection, args=(user, client._serverSock, free_server, free_port, client._fileDirectory))
                 client._serverThread.start()
                 
                 # Establecemos los atributos del cliente
                 client._connected_user = user
                 client._threadAddress = (free_server, free_port)
-                client._isConnected = True
-                
                 print('CONNECT OK')
+
 
             elif respuesta[0] == "1":
                 print('CONNECT FAIL, USER DOES NOT EXIST')
+                return client.RC.ERROR
+
             elif respuesta[0] == "2":
                 print('USER ALREADY CONNECTED')
+                return client.RC.ERROR
+
             else:
                 print('CONNECT FAIL')
+                return client.RC.ERROR
 
-            # Close the connection after processing
-            sock.close()
+            sock.close()  # Cierra el socket después de usarlo
+            return client.RC.OK
 
         except Exception as e:
             print("Exception during connection:", str(e))
@@ -198,7 +212,6 @@ class client :
 
                 if respuesta[0] == "0":
                     # Cerramos el socket del servidor del cliente y esperamos a que el hilo termine
-                    print("Threads activos: ", threading.active_count())
                     sock_thread = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     sock_thread.connect(client._threadAddress)
 
@@ -211,8 +224,6 @@ class client :
                     client._serverThread.join()
 
                     print('DISCONNECT OK')
-                    time.sleep(1)
-                    print("Threads activos: ", threading.active_count())
 
                 elif respuesta[0] == "1":
                     print('DISCONNECT FAIL / USER DOES NOT EXIST')
@@ -220,6 +231,9 @@ class client :
                     print('DISCONNECT FAIL / USER NOT CONNECTED')
                 else:
                     print('DISCONNECT FAIL') 
+                
+                sock.close()  # Cierra el socket después de usarlo
+                return client.RC.OK
             
         except Exception as e:
             print("Exception during disconnection:", str(e))
@@ -235,38 +249,46 @@ class client :
             message = "PUBLISH\0"
             sock.sendall(message.encode())
 
-            sock.sendall(client._connected_user.encode() + "\0".encode())
+            if client._isConnected:
+                sock.sendall(client._connected_user.encode() + "\0".encode())
+                #Comprobamos si el archivo existe en el directorio pasado por el cliente
+                if not os.path.exists(client._fileDirectory + "/" + fileName + '.txt'):
+                    print('PUBLISH FAIL, FILE DOES NOT EXIST')
+                    # Si no existe enviamos notfound, que el servidor interpretará como que el archivo no existe
+                    sock.sendall("notfound".encode() + "\0".encode())
+                    sock.sendall(description.encode() + "\0".encode())
+                    timestamp = client.clientweb.service.get_timestamp()
+                    sock.sendall(timestamp.encode() + "\0".encode())
+                    return client.RC.ERROR
 
-            #Comprobamos si el archivo existe en el directorio pasado por el cliente
-            if not os.path.exists(client._fileDirectory + "/" + fileName + '.txt'):
-                print('PUBLISH FAIL, FILE DOES NOT EXIST')
-                # Si no existe enviamos notfound, que el servidor interpretará como que el archivo no existe
-                sock.sendall("notfound".encode() + "\0".encode())
+                sock.sendall(fileName.encode() + "\0".encode())
+
                 sock.sendall(description.encode() + "\0".encode())
+
                 timestamp = client.clientweb.service.get_timestamp()
                 sock.sendall(timestamp.encode() + "\0".encode())
-                return client.RC.ERROR
 
-            sock.sendall(fileName.encode() + "\0".encode())
+                respuesta = sock.recv(1).decode("utf-8")
+                
+                if respuesta[0] == "0":
+                    print('PUBLISH OK')
 
-            sock.sendall(description.encode() + "\0".encode())
+                elif respuesta[0] == "1":
+                    print('PUBLISH FAIL, USER DOES NOT EXIST')
 
-            timestamp = client.clientweb.service.get_timestamp()
-            sock.sendall(timestamp.encode() + "\0".encode())
+                elif respuesta[0] == "2":
+                    print('PUBLISH FAIL, USER NOT CONNECTED')
+                elif respuesta[0] == "3":
+                    print('PUBLISH FAIL, FILE ALREADY EXISTS')
 
-            respuesta = sock.recv(1).decode("utf-8")
-            
-            print('Received message: ' + respuesta[0])
-            if respuesta[0] == "0":
-                print('PUBLISH OK')
-            elif respuesta[0] == "1":
-                print('PUBLISH FAIL, USER DOES NOT EXIST')
-            elif respuesta[0] == "2":
-                print('PUBLISH FAIL, USER NOT CONNECTED')
-            elif respuesta[0] == "3":
-                print('PUBLISH FAIL, FILE ALREADY EXISTS')
+                else:
+                    print('PUBLISH FAIL')
+
             else:
-                print('PUBLISH FAIL')
+                print('PUBLISH FAIL, USER NOT CONNECTED')
+
+            sock.close()  # Cierra el socket después de usarlo
+            return client.RC.OK
 
         except Exception as e:
             print("Exception during publishing:", str(e))
@@ -329,11 +351,14 @@ class client :
             timestamp = client.clientweb.service.get_timestamp()
             sock.sendall(timestamp.encode() + "\0".encode())
 
-            respuesta = sock.recv(1).decode("utf-8")
+            respuesta = sock.recv(16)
+            respuesta = respuesta.decode("utf-8")
             
             sock.sendall("OK\0".encode())
 
-            numero_de_conectados = sock.recv(256).decode("utf-8").strip('\x00')
+            numero_de_conectados = sock.recv(16)
+            numero_de_conectados = numero_de_conectados.decode("utf-8")
+            numero_de_conectados = numero_de_conectados.strip('\x00')
 
             if respuesta[0] == "0":
                 print('LIST_USERS OK')
@@ -363,14 +388,16 @@ class client :
             else:
                 print('LIST_USERS FAIL')
 
+            sock.close()  # Cierra el socket después de usarlo
+            return client.RC.OK
+
         except Exception as e:
             print("Exception listing users:", str(e))
             return client.RC.ERROR
         
 
     @staticmethod
-    def  listcontent(user) :
-        print("Listing content of user: " + user)
+    def  listcontent(user):
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_address = (client._server, client._port)
@@ -382,11 +409,13 @@ class client :
             
             sock.sendall(user.encode() + "\0".encode())
 
-            
             timestamp = client.clientweb.service.get_timestamp()
             sock.sendall(timestamp.encode() + "\0".encode())
 
             respuesta = sock.recv(1024).decode("utf-8")
+            
+            sock.sendall("OK\0".encode())
+
             numero_de_archivos = sock.recv(1024).decode("utf-8")
             numero_de_archivos = numero_de_archivos.strip('\x00')
 
@@ -396,8 +425,7 @@ class client :
                 for i in range(int(numero_de_archivos)):
                     archivo = sock.recv(1024).decode("utf-8")
                     # Imprimir un tabulador seguido del nombre del archivo
-                    print("\t" + archivo, end='') 
-                    print()
+                    print("\t" + archivo)
 
             elif respuesta[0] == "1":
                 print('LIST_CONTENT FAIL, USER DOES NOT EXIST')
@@ -405,6 +433,9 @@ class client :
                 print('LIST_CONTENT FAIL, USER NOT CONNECTED')
             else:
                 print('LIST_CONTENT FAIL')
+            
+            sock.close()  # Cierra el socket después de usarlo
+            return client.RC.OK
             
         except Exception as e:
             print("Exception listing content:", str(e))
@@ -415,38 +446,41 @@ class client :
     def getfile(user, remote_FileName, local_FileName):
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            if user not in client._list_users:
+                print('GET_FILE FAIL, USER DOES NOT EXIST')
+                return client.RC.ERROR
             thread = client._list_users.get(user)
-            print('Thread Client:', thread)
+            if thread is None:
+                print('GET_FILE FAIL, USER NOT CONNECTED')
+                return client.RC.ERROR
+
             sock.connect(thread)
             message = "GET_FILE\0" 
-            print('Sending message:', message)
             sock.sendall(message.encode())
 
-            print('Sending user remote:', user)
             sock.sendall(str(len(user)).encode() + "\0".encode())
             sock.sendall(user.encode() + "\0".encode())
 
-            print('Sending user connected:', client._connected_user)
-            sock.sendall(client._connected_user.encode() + "\0".encode())
-
-
-            print('Sending remote file name:', remote_FileName)
             sock.sendall(remote_FileName.encode() + "\0".encode())
-
-            print('Sending local file name:', local_FileName)
-            sock.sendall(local_FileName.encode() + "\0".encode())
-
-            respuesta = sock.recv(1024).decode("utf-8")
             
+            respuesta = sock.recv(256).decode("utf-8")
+
             if respuesta[0] == "0":
+                # Recibimos el archivo por chunks de 256 bytes y lo escribimos en el archivo local
+                with open(client._fileDirectory + "/" + local_FileName + '.txt', 'wb') as local_file:
+                    while True:
+                        file_chunk = sock.recv(256)
+                        if file_chunk == b'FINARCHIVO\0':
+                            break
+                        local_file.write(file_chunk)
+                        sock.sendall('OK\0'.encode())
                 print('GET_FILE OK')
-            elif respuesta[0] == "1":
-                print('GET_FILE FAIL, USER DOES NOT EXIST')
             elif respuesta[0] == "2":
                 print('GET_FILE FAIL, FILE NOT FOUND')
             else:
                 print('GET_FILE FAIL')
             
+            sock.close()  # Cierra el socket después de usarlo
             return client.RC.OK
             
         except Exception as e:
@@ -463,42 +497,26 @@ class client :
         try:
             while client._isConnected:
                 connection, client_address = server_sock.accept()
-                
                 message = connection.recv(256).decode("utf-8")
                 if message.startswith("GET_FILE"):
-                    print("Received GET FILE request.")
                     parts = message.split("\0")
 
                     user = parts[2]
-                    user_local = parts[3]
-                    remote_file_name = parts[4]
-                    local_file_name = parts[5]
-
-                    print('User:', user)
-                    print('Remote File Name:', remote_file_name)
-                    print('Local File Name:', local_file_name)
-                    print('User Local:', user_local)
-                    print('File Directory:', file_directory)
+                    remote_file_name = parts[3]
                     
                     pathFile = file_directory + "/" + remote_file_name + '.txt'
-                    print('Path File:', pathFile)
-                    pathFileLocal = '../usuarios/' + user_local + '/' + local_file_name + '.txt'
-
                     # Check if the remote file exists and is accessible
                     if os.path.exists(pathFile):
                         # Read the content of the remote file
+                        connection.sendall(('0\0').encode())
                         with open(pathFile, 'rb') as remote_file:
-                            file_content = remote_file.read()
-
-                        # Send code 0 followed by the file content to indicate that the file transfer is starting
-                        connection.sendall(('0\0' + file_content.decode("utf-8") + '\0').encode())
-
-                        # Open the local file for writing
-                        with open(pathFileLocal, 'wb') as local_file:
-                            # Write the content of the remote file to the local file
-                            local_file.write(file_content)
-                        
-                        print('File transfer complete.')
+                            while True:
+                                file_chunk = remote_file.read(256)
+                                if not file_chunk:
+                                    connection.sendall(b'FINARCHIVO\0')
+                                    break
+                                connection.sendall(file_chunk)
+                                comprobacion = connection.recv(256)
                     else:
                         # Send code 2 to indicate that the remote file does not exist
                         connection.sendall(('2\0').encode())

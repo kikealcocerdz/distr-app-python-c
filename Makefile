@@ -43,4 +43,14 @@ servidor: servidor/clavesservidor.c servidor/servidor.c servidor/comm.c $(OBJECT
 clean:
 	$(RM) core $(OBJECTS_CLNT) $(OBJECTS_SVC)  $(SERVER) servidor/clavesservidor
 
+run-servicio:
+	gnome-terminal -- bash -c "cd servidor; ./servidor 4500; exec bash"
+	gnome-terminal -- bash -c "./servicio-web/servidorweb_server; exec bash"
+	gnome-terminal -- bash -c "python3 ./servicio-web/service.py; exec bash"
+	gnome-terminal -- bash -c "cd cliente; python3 client.py -s localhost -p 4500 -f /home/kikealcocerdz/Documents/year-3/DISTRIBUIDOS/distr-app-pythonc/archivosCliente2; exec bash"
+	gnome-terminal -- bash -c "cd cliente; python3 client.py -s localhost -p 4500 -f /home/kikealcocerdz/Documents/year-3/DISTRIBUIDOS/distr-app-pythonc/archivosCliente1; exec bash"
+
+
+
+
 .PHONY: all clean

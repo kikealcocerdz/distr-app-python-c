@@ -10,7 +10,7 @@
 #include "comm.h"
 #include "../servicio-web/servidorweb.h"
 
-#define MAXSIZE 256
+#define MAXSIZE 1024
 
 pthread_mutex_t mutex_mensaje;
 int mensaje_no_copiado = true;
@@ -24,6 +24,7 @@ void tratar_mensaje(void *arg) {
     char op='\0';
     char fecha[256]="";
     char recibido[256]="";
+    char recibido2[256]="";
     char value1[256]="", operacion[256]="", res[256]="", res_clients[256]="", res_username[50]="", attr2[256]="", attr3[256]="", attr4[256]="";
     char V_Value2[256]="";
     int N_Value2, key;
@@ -248,12 +249,13 @@ void tratar_mensaje(void *arg) {
                 perror("error al recvMessage 2");
                 return;
             }
-
+            
             ret2 = sendMessage(sc, res_clients, strlen(res_clients) + 1);
             if (ret == -1) {
                 pthread_mutex_unlock(&mutex_mensaje);
                 return;
             }
+
             if (strcmp(res, "0") == 0){
                 for (int i = 0; i < res2; i++) {
                     int ret_cliente;
@@ -322,6 +324,13 @@ void tratar_mensaje(void *arg) {
                 pthread_mutex_unlock(&mutex_mensaje);
                 return;
             }
+
+            if (readLine(sc, (char *)&recibido, MAXSIZE) == -1) {
+                perror("error al recvMessage 2");
+                return;
+            }
+            printf("Respuesta recibida: %s\n", recibido);
+
             sprintf(res_clients, "%d", res2);
             ret2 = sendMessage(sc, res_clients, res2 + 1);
             if (ret2 == -1) {
@@ -329,7 +338,7 @@ void tratar_mensaje(void *arg) {
                 return;
             }
 
-            char ruta[100];
+            char ruta[256];
             int fileCount = 0;
             sprintf(ruta, "../usuarios/%s", res_username);
             DIR *dir;
@@ -337,9 +346,9 @@ void tratar_mensaje(void *arg) {
             if ((dir = opendir(ruta)) != NULL) {
                 while ((entry = readdir(dir)) != NULL && fileCount < res2) {
                     int ret_cliente;
-                    char res_cliente[256];
+                    char res_cliente[1024];
                     if (entry->d_type == DT_REG) { // Solo procesa archivos regulares
-                        char file_path[60];
+                        char file_path[1024];
                         sprintf(file_path, "%s/%s", ruta, entry->d_name);
                         FILE *fp = fopen(file_path, "r");
                         if (fp != NULL) {
@@ -368,7 +377,7 @@ void tratar_mensaje(void *arg) {
             break;
 
         case '7':
-            printf("DISCONNECT2\n");
+            printf("DISCONNECT\n");
             if (readLine(sc, (char *)&attr2, MAXSIZE) == -1) {
                 perror("error al recvMessage 2");
                 return;
@@ -430,9 +439,7 @@ int main(int argc, char *argv[]) {
     FILE *fp = fopen("../usuarios/conectados.txt", "w");
     if (fp != NULL) {
         fclose(fp);
-    } else {
-        printf("No se pudo abrir conectados.txt para borrar contenido.\n");
-    }
+    } 
 
     while (1) {
         sc = serverAccept(sd);

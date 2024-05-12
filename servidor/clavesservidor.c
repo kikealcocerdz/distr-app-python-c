@@ -10,17 +10,21 @@
 #include <stdlib.h>
 #include <dirent.h>
 
-int claves;
-int key_leida;
 char valor1[100];
 int N_value2;
 double V_value2[100];
 
 
 void register_serv(char *username, char *res) {
-    char foldername[20]; 
+    if (strlen(username) == 0 || strlen(username) > 256) {
+        sprintf(res, "2");
+        return;
+    }
+    else {
+    char foldername[1024]; 
     sprintf(foldername, "../usuarios/%s", username);  // Convertimos el nombre de usuario en string y añadimos el directorio
     // Check if the folder exists
+
     if (access(foldername, F_OK) == 0) {
         perror("Usuario registrado previamente\n");
         sprintf(res, "1");
@@ -35,10 +39,11 @@ void register_serv(char *username, char *res) {
     }
     sprintf(res, "0");
     return;
+    }
 }
 
 void unregister_serv(char *username, char *res) {
-    char foldername[20]; 
+    char foldername[256]; 
     sprintf(foldername, "../usuarios/%s", username);
 
     // Check if the folder exists
@@ -48,7 +53,7 @@ void unregister_serv(char *username, char *res) {
         sprintf(res, "1");
         return;
     }
-    
+
     // Remove all content from the folder
     DIR *dir = opendir(foldername);
     if (dir == NULL) {
@@ -59,8 +64,8 @@ void unregister_serv(char *username, char *res) {
     }
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type == DT_REG) { // Regular file
-            char filepath[256];
+        if (entry->d_type == DT_REG) { 
+            char filepath[1024];
             sprintf(filepath, "%s/%s", foldername, entry->d_name);
             if (remove(filepath) != 0) {
                 perror("Error al eliminar el archivo\n");

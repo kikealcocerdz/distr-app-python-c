@@ -11,8 +11,9 @@ bool_t
 terminal_rpc_1_svc(int request, char *timestamp, char *user, int *result,  struct svc_req *rqstp)
 {
   bool_t retval;
-
+  
   switch(request){
+    // Imprimimos el mensaje correspondiente a cada request
     case '0':
       printf("%s REGISTER %s\n", user, timestamp);
       break;

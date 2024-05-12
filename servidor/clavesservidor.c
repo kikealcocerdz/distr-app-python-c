@@ -16,6 +16,7 @@ double V_value2[100];
 
 
 void register_serv(char *username, char *res) {
+    // Comprobamos si el usuario es nulo
     if (strlen(username) == 0 || strlen(username) > 256) {
         sprintf(res, "2");
         return;
@@ -23,15 +24,15 @@ void register_serv(char *username, char *res) {
     else {
     char foldername[1024]; 
     sprintf(foldername, "../usuarios/%s", username);  // Convertimos el nombre de usuario en string y añadimos el directorio
-    // Check if the folder exists
 
+    // Comprobamos si el usuario ya existe
     if (access(foldername, F_OK) == 0) {
         perror("Usuario registrado previamente\n");
         sprintf(res, "1");
         return;
     }
     
-    // Create the folder
+    // CCreamos el directorio
     if (mkdir(foldername, 0777) == -1) {
         perror("Error al crear el directorio");
         sprintf(res, "2");
@@ -46,15 +47,14 @@ void unregister_serv(char *username, char *res) {
     char foldername[256]; 
     sprintf(foldername, "../usuarios/%s", username);
 
-    // Check if the folder exists
+    // Comprobamos si está registrado
     if (access(foldername, F_OK) != 0) {
-        // Folder does not exist
         perror("Usuario no registrado\n");
         sprintf(res, "1");
         return;
     }
 
-    // Remove all content from the folder
+    // Borramos el contenido del directorio
     DIR *dir = opendir(foldername);
     if (dir == NULL) {
         // Folder does not exist
@@ -77,7 +77,7 @@ void unregister_serv(char *username, char *res) {
     }
     closedir(dir);
 
-    // Attempt to remove the folder
+    // Borramos el directorio
     if (rmdir(foldername) != 0) {
         // Error occurred while removing the folder
         perror("Error al eliminar el directorio\n");
@@ -85,27 +85,23 @@ void unregister_serv(char *username, char *res) {
         return;
     }
 
-    // Folder successfully removed
     sprintf(res, "0");
 }
 
 void connect_serv(char *username, char *free_port, char *free_server, char *res) {
-    printf("Cliente %s ha pasado el puerto %s\n", username, free_port);
-    char foldername[20]; 
+    char foldername[256]; 
     sprintf(foldername, "../usuarios/%s", username);
 
-    // Check if the folder exists
+    // Comprobamos si el usuario está registrado
     if (access(foldername, F_OK) != 0) {
         // Folder does not exist
         perror("Usuario no registrado\n");
         sprintf(res, "1");
         return;
-    }
+    };
 
-    printf("Usuario %s registrado\n", username);
-    // Check if username is on conectados.txt
+    // Comprobamos si el usuario ya está conectado
     FILE *conectadosFile = fopen("../usuarios/conectados.txt", "a+");
-
     char user[256];
     while (fscanf(conectadosFile, "%s", user) == 1) {
         if (strcmp(username, user) == 0) {
@@ -130,22 +126,19 @@ void connect_serv(char *username, char *free_port, char *free_server, char *res)
 }
 
 void disconnect_serv(char *username, char *res) {
-    char foldername[20]; 
+    char foldername[256]; 
+    
     FILE *conectadosFile = fopen("../usuarios/conectados.txt", "r+");
     FILE *tempFile = fopen("../usuarios/temp.txt", "w");
     sprintf(foldername, "../usuarios/%s", username);
 
-    // Check if the folder exists
     if (access(foldername, F_OK) != 0) {
-        // Folder does not exist
         sprintf(res, "1");
         fclose(conectadosFile);
         return;
     }
 
-    // Check if conectados.txt exists
     if (conectadosFile == NULL) {
-        // Error opening conectados file
         sprintf(res, "3");
         return;
     }
@@ -153,29 +146,27 @@ void disconnect_serv(char *username, char *res) {
     char line[256];
     int userFound = 0;
 
-    // Read file line by line
+    // Leer el archivo conectados.txt y escribir en temp.txt
     while (fgets(line, sizeof(line), conectadosFile)) {
         if (strstr(line, username) != NULL) {
-            // Skip the line if it contains the username
+            // User found
             userFound = 1;
             continue;
         }
-        // Write the line to the temporary file
+        // Escrbir la línea en el archivo temporal
         fputs(line, tempFile);
     }
 
     fclose(conectadosFile);
     fclose(tempFile);
 
-    // Replace the original file with the temporary one
+    // Reemplazar el archivo conectados.txt con temp.txt
     remove("../usuarios/conectados.txt");
     rename("../usuarios/temp.txt", "../usuarios/conectados.txt");
 
     if (userFound) {
-        // Notify success
         sprintf(res, "0");
     } else {
-        // Notify failure
         sprintf(res, "2");
     }
 }
@@ -184,16 +175,16 @@ void publish_serv(char *username, char *fileName, char *description, char *res) 
     char foldername[50]; 
     char checkfile[100];
     sprintf(foldername, "../usuarios/%s", username);
+    
+    // Creamos un archivo con el nombre del archivo
     sprintf(checkfile, "%s/%s.txt", foldername, fileName); 
 
     if (access(foldername, F_OK) != 0) {
-        // Folder does not exist
         perror("Usuario no registrado\n");
         sprintf(res, "1");
         return;
     }
 
-    // Check if the file exists
     if (access(checkfile, F_OK) == 0) {
         sprintf(res, "3");
         return;
@@ -216,7 +207,8 @@ void publish_serv(char *username, char *fileName, char *description, char *res) 
 
     char filepath[256];
 
-    if (strcmp(fileName, "notfound") == 0) { // Cambio aquí
+    // Si el archivo no existe, salir   
+    if (strcmp(fileName, "notfound") == 0) {
         sprintf(res, "4");
         return;
     }
@@ -239,29 +231,24 @@ void publish_serv(char *username, char *fileName, char *description, char *res) 
 
 void delete_serv(char *username, char *fileName, char *res) {
 
+    // Comprombamos si el usuario es nulo
     char foldername[60]; 
     if (strlen(fileName) == 0 || strlen(fileName) > 256){
         sprintf(res, "4");
         return;
     }
 
-    if (strlen(fileName) == 0 || strlen(fileName) > 256){
-        sprintf(res, "4");
-        return;
-    }
-
-
     sprintf(foldername, "../usuarios/%s", username);
     printf("Foldername: %s\n", foldername);
-    // Check if the folder exists
+    
     if (access(foldername, F_OK) != 0) {
-        // Folder does not exist
+        
         perror("Usuario no registrado\n");
         sprintf(res, "1");
         return;
     }
 
-    // Check if username is on conectados.txt
+
     FILE *conectadosFile = fopen("../usuarios/conectados.txt", "r");
     if (conectadosFile == NULL) {
         perror("Error al abrir conectados file\n");
@@ -269,7 +256,7 @@ void delete_serv(char *username, char *fileName, char *res) {
         return;
     }
 
-    // Write the file inside the user folder
+
     char filepath[256];
 
     
@@ -295,14 +282,14 @@ void list_users_serv(char *username, char *res, int *res2) {
     }
 
     sprintf(foldername, "../usuarios/%s", username);
-    // Check if the folder exists
+    
     if (access(foldername, F_OK) != 0) {
-        // Folder does not exist
+        
         sprintf(res, "1");
         return;
     }
     
-    // Check if username is on conectados.txt
+    
     FILE *conectadosFile = fopen("../usuarios/conectados.txt", "r");
     if (conectadosFile == NULL) {
         perror("Error al abrir conectados file\n");
@@ -313,13 +300,14 @@ void list_users_serv(char *username, char *res, int *res2) {
     char line[256];
     int lineCount = 0;
 
+    // Contar las líneas del archivo conectados.txt
     while (fgets(line, sizeof(line), conectadosFile)) {
         lineCount++;
     }
 
     fclose(conectadosFile);
     sprintf(res, "0");
-    *res2 = lineCount; // Update the value pointed to by res2
+    *res2 = lineCount; 
     return;
 } 
 
@@ -327,28 +315,27 @@ void list_content_serv(char *username, char *username_folder, char *res, int *re
     char foldername[50];
     sprintf(foldername, "../usuarios/%s", username_folder);
 
-    // Check if the folder exists
+
     DIR *dir = opendir(foldername);
     if (dir == NULL) {
-        // Folder does not exist
+        
         sprintf(res, "Usuario no registrado\n");
-        *res2 = -1; // Indicar que ocurrió un error
+        *res2 = -1; 
         return;
     }
 
     int fileCount = 0;
     struct dirent *entry;
 
-    // Count files in the directory
+    // Contar los archivos en el directorio
     while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type == DT_REG) { // Regular file
+        if (entry->d_type == DT_REG) {
             fileCount++;
         }
     }
 
     closedir(dir);
-
-    // Set the results
+    
     sprintf(res, "0");
     *res2 = fileCount;
     sprintf(res_username, "%s", username_folder);

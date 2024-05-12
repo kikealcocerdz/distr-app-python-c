@@ -26,8 +26,6 @@ void tratar_mensaje(void *arg) {
     char recibido[256]="";
     char recibido2[256]="";
     char value1[256]="", operacion[256]="", res[256]="", res_clients[256]="", res_username[50]="", attr2[256]="", attr3[256]="", attr4[256]="";
-    char V_Value2[256]="";
-    int N_Value2, key;
     CLIENT *clnt;
 	enum clnt_stat retval;
     int result_1;
@@ -71,15 +69,18 @@ void tratar_mensaje(void *arg) {
     switch (op) {
         case '0':
             printf("REGISTER\n");
+            // Recibir el nombre de usuario
             if (readLine(sc, (char *)&attr2, MAXSIZE) == -1) {
                 perror("error al recvMessage 2");
                 return;
             }
+            // Recibir la timestamp 
             if (readLine(sc, (char *)&fecha, MAXSIZE) == -1) {
                 perror("error al recvMessage 2");
                 return;
             }
             register_serv(attr2, res);
+            // Envíamos al servidor rpc la timestamp con la operación y usuario
             retval = terminal_rpc_1(op, fecha, attr2, &result_1, clnt);
             if (retval != RPC_SUCCESS) {
                 clnt_perror(clnt, "Error al llamar al procedimiento remoto");
@@ -87,6 +88,8 @@ void tratar_mensaje(void *arg) {
             }         
             clnt_destroy(clnt);   
             printf("Usuario recibido: %s\n", attr2);
+
+            // Envíamos el resultado de la operación
             ret = sendMessage(sc, res, strlen(res) + 1);
             if (ret == -1) {
                 pthread_mutex_unlock(&mutex_mensaje);
@@ -95,6 +98,7 @@ void tratar_mensaje(void *arg) {
             break;
         case '1':
             printf("UNREGISTER\n");
+            // Recibimos el usuario
             if (readLine(sc, (char *)&attr2, MAXSIZE) == -1) {
                 perror("error al recvMessage 2");
                 return;
@@ -104,6 +108,7 @@ void tratar_mensaje(void *arg) {
                 return;
             }
             unregister_serv(attr2, res);
+            // Envíamos al rpc timestamp
             retval = terminal_rpc_1(op, fecha, attr2, &result_1, clnt);
             if (retval != RPC_SUCCESS) {
                 clnt_perror(clnt, "Error al llamar al procedimiento remoto");
@@ -123,6 +128,7 @@ void tratar_mensaje(void *arg) {
                 perror("error al recvMessage 2");
                 return;
             }
+            // recibimos la ip y puerto del hilo
             if (readLine(sc, (char *)&attr3, MAXSIZE) == -1) {
                 perror("error al recvMessage 3");
                 return;
@@ -136,6 +142,7 @@ void tratar_mensaje(void *arg) {
                 return;
             }
             connect_serv(attr2, attr3, attr4, res);
+            // Envíamos al rpc timestamp
             retval = terminal_rpc_1(op, fecha, attr2, &result_1, clnt);
             if (retval != RPC_SUCCESS) {
                 clnt_perror(clnt, "Error al llamar al procedimiento remoto");
@@ -143,6 +150,7 @@ void tratar_mensaje(void *arg) {
             }         
             clnt_destroy(clnt);
             printf("Respuesta: %s\n", res);
+            // Enviamos la respuesta al cliente
             ret = sendMessage(sc, res, strlen(res) + 1);
             if (ret == -1) {
                 pthread_mutex_unlock(&mutex_mensaje);
@@ -155,6 +163,7 @@ void tratar_mensaje(void *arg) {
                 perror("error al recvMessage 2");
                 return;
             }
+            // recibimos el filename y la descripcion
             if (readLine(sc, (char *)&attr3, MAXSIZE) == -1) {
                 perror("error al recvMessage 3");
                 return;
@@ -168,8 +177,10 @@ void tratar_mensaje(void *arg) {
                 return;
             }
             publish_serv(attr2, attr3, attr4, res);
+            // Concatenamos el filename y la fecha para enviar al rpc
             strcat(attr3, " ");
             strcat(attr3, fecha);
+            // Envíamos al rpc timestamp
             retval = terminal_rpc_1(op, attr3, attr2, &result_1, clnt);
             if (retval != RPC_SUCCESS) {
                 clnt_perror(clnt, "Error al llamar al procedimiento remoto");
@@ -201,6 +212,7 @@ void tratar_mensaje(void *arg) {
                 return;
             }
             delete_serv(attr2, attr3, res);
+            // Concatenamos el filename y la fecha para enviar al rpc
             strcat(attr3, " ");
             strcat(attr3, fecha);
             retval = terminal_rpc_1(op, attr3, attr2, &result_1, clnt);
@@ -255,7 +267,7 @@ void tratar_mensaje(void *arg) {
                 pthread_mutex_unlock(&mutex_mensaje);
                 return;
             }
-
+            // Si la respuesta es 0, enviamos los usuarios conectados
             if (strcmp(res, "0") == 0){
                 for (int i = 0; i < res2; i++) {
                     int ret_cliente;
@@ -266,24 +278,25 @@ void tratar_mensaje(void *arg) {
                         return;
                     }
                     
-                    // Skip lines until reaching the desired line
+                    // Saltar las primeras i líneas
                     for (int j = 0; j < i; j++) {
                         if (fgets(res_cliente, sizeof(res_cliente), fp) == NULL) {
                             fclose(fp);
-                            return; // Error handling, maybe break the loop or handle accordingly
+                            return; 
                         }
                     }
                     
-                    // Read the line to be sent
+                    // Leer la línea i-ésima
                     if (fgets(res_cliente, sizeof(res_cliente), fp) != NULL) {
-                        // Send the line
+                        
                         printf("Respuesta: %s\n", res_cliente);
                         ret_cliente = sendMessage(sc, res_cliente, strlen(res_cliente) + 1);
                         if (ret_cliente == -1) {
                             fclose(fp);
-                            return; // Error handling, maybe break the loop or handle accordingly
+                            return; 
                         } 
                     }
+                    // Recibimos una confirmación del cliente
                     if (readLine(sc, (char *)&recibido, MAXSIZE) == -1) {
                         perror("error al recvMessage 2");
                         return;
@@ -325,10 +338,12 @@ void tratar_mensaje(void *arg) {
                 return;
             }
 
+            // Recibimos una confirmación del cliente
             if (readLine(sc, (char *)&recibido, MAXSIZE) == -1) {
                 perror("error al recvMessage 2");
                 return;
             }
+            
             printf("Respuesta recibida: %s\n", recibido);
 
             sprintf(res_clients, "%d", res2);
@@ -343,11 +358,13 @@ void tratar_mensaje(void *arg) {
             sprintf(ruta, "../usuarios/%s", res_username);
             DIR *dir;
             struct dirent *entry;
+
+            // Iterar sobre los archivos del directorio
             if ((dir = opendir(ruta)) != NULL) {
                 while ((entry = readdir(dir)) != NULL && fileCount < res2) {
                     int ret_cliente;
                     char res_cliente[1024];
-                    if (entry->d_type == DT_REG) { // Solo procesa archivos regulares
+                    if (entry->d_type == DT_REG) { 
                         char file_path[1024];
                         sprintf(file_path, "%s/%s", ruta, entry->d_name);
                         FILE *fp = fopen(file_path, "r");
@@ -360,7 +377,7 @@ void tratar_mensaje(void *arg) {
                             ret_cliente = sendMessage(sc, res_cliente, strlen(res_cliente) + 1);
                             if (ret_cliente == -1) {
                                 fclose(fp);
-                                return; // Manejo del error, tal vez romper el bucle o manejarlo de acuerdo
+                                return; 
                             }
                             fclose(fp);
                             fileCount++;

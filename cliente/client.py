@@ -76,30 +76,35 @@ class client :
     @staticmethod
     def  unregister(user) :
         try:
-            client.disconnect(user)
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            server_address = (client._server, client._port)
-            sock.connect(server_address)
-            
-            message = "UNREGISTER\0"
-            sock.sendall(message.encode())
-            
-            sock.sendall(user.encode() + "\0".encode())
+            # Es necesario conectarse al servidor para poder darse de baja en el sistema
+            # para evitar que un usuario externo pueda dar de baja a otro usuario
+            if client._connected_user == user:
+                client.disconnect(user)
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                server_address = (client._server, client._port)
+                sock.connect(server_address)
+                
+                message = "UNREGISTER\0"
+                sock.sendall(message.encode())
+                
+                sock.sendall(user.encode() + "\0".encode())
 
-            
-            timestamp = client.clientweb.service.get_timestamp()
-            sock.sendall(timestamp.encode() + "\0".encode())
+                
+                timestamp = client.clientweb.service.get_timestamp()
+                sock.sendall(timestamp.encode() + "\0".encode())
 
-            respuesta = sock.recv(16).decode("utf-8")
+                respuesta = sock.recv(16).decode("utf-8")
 
-            if respuesta[0] == "0":
-                print('UNREGISTER OK')
-            elif respuesta[0] == "1":
-                print('USER DOES NOT EXIST')
-            elif respuesta[0] == "2":
-                print('REGISTER FAIL')
+                if respuesta[0] == "0":
+                    print('UNREGISTER OK')
+                elif respuesta[0] == "1":
+                    print('USER DOES NOT EXIST')
+                elif respuesta[0] == "2":
+                    print('REGISTER FAIL')
+                else:
+                    print('REGISTER FAIL')
             else:
-                print('REGISTER FAIL')
+                print('UNREGISTER FAIL / NO ERES TÚ')
             
         except Exception as e:
             print("Exception during unregistration:", str(e))

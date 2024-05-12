@@ -1,8 +1,15 @@
 
-
 - Enviar el tamaño de mensaje en cada send
-- añadir fichero en rpc
-- comentar código
-- comprobar disconnect
-- hacer mejor make y ver si podemos ejecutar un solo comando que abra varias terminales
+
 - apuntar testeos
+
+- comentar código 
+
+- hacer make con palabras dedicadas
+
+
+- unregister tiene que borrar aunque haya archivos publicados >
+- comprobar disconnect >
+- añadir fichero en rpc >
+
+

@@ -48,6 +48,29 @@ void unregister_serv(char *username, char *res) {
         sprintf(res, "1");
         return;
     }
+    
+    // Remove all content from the folder
+    DIR *dir = opendir(foldername);
+    if (dir == NULL) {
+        // Folder does not exist
+        perror("Usuario no registrado\n");
+        sprintf(res, "1");
+        return;
+    }
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type == DT_REG) { // Regular file
+            char filepath[256];
+            sprintf(filepath, "%s/%s", foldername, entry->d_name);
+            if (remove(filepath) != 0) {
+                perror("Error al eliminar el archivo\n");
+                sprintf(res, "2");
+                closedir(dir);
+                return;
+            }
+        }
+    }
+    closedir(dir);
 
     // Attempt to remove the folder
     if (rmdir(foldername) != 0) {
@@ -265,7 +288,7 @@ void list_users_serv(char *username, char *res, int *res2) {
         sprintf(res, "2");
         return;
     }
-    
+
     sprintf(foldername, "../usuarios/%s", username);
     // Check if the folder exists
     if (access(foldername, F_OK) != 0) {
